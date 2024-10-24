@@ -1,0 +1,81 @@
+.wrap {
+    margin-top: 106px;
+
+    .register-wr {
+        width: 800px;
+        margin: 0 auto;
+        padding-bottom: 200px;
+
+        .title {
+            font-size: 24px;
+            text-align: center;
+            padding: 90px 0 70px;
+        }
+
+        #register-form {
+
+            h4 {
+                font-size: 20px;
+                margin-bottom: 30px;
+            }
+
+            .form-block {
+                display: grid;
+                grid-template-columns: 240px auto;
+                font-size: 16px;
+                border-bottom: solid 1px #e8e8e8;
+                box-sizing: border-box;
+
+                .title-field {
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                    box-sizing: border-box;
+                }
+
+                .input-field {
+                    padding: 10px 15px;
+                    box-sizing: border-box;
+
+                    input[type='text'] {
+                        padding: 8px 10px;
+                        width: 400px;
+                        // height: 38px;
+                        font-size: 14px;
+                        outline: none;
+                    }
+
+                    input[type='radio'] {
+                        margin: 0 3px 0 10px;
+                    }
+
+                    input[type='radio']:nth-child(1) {
+                        margin: 0 3px 0 10px;
+                        margin-left: 0;
+                    }
+
+                    .desc {
+                        padding: 0;
+                        margin-top: 5px;
+                        font-size: 12px;
+                    }
+
+                    .tooltip {
+                        font-size: 12px;
+                    }
+
+                    &.tel-box {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 5px;
+                        width: 430px;
+
+                        input {
+                            text-align: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
