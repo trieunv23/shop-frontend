@@ -1,0 +1,25 @@
+.location-field {
+    display: flex;
+    flex-direction: column;
+
+    .edit-field {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+
+        .edit-title {
+            width: 150px;
+            font-size: 14px;
+        }
+
+        .edit-input {
+            width: calc(100% - 150px);
+            
+            input, select {
+                width: 100%;
+                padding: 8px 10px;
+            }
+        }
+    }
+}

@@ -1,24 +1,18 @@
-import logo from './logo.svg';
 import './App.css';
-import { NavLink, Route, Routes } from 'react-router-dom';
-import TodoFeature from './features/Todo';
-import AlbumFeature from './features/Album';
-import NotFound from './components/NotFound';
-import HomeFeature from './features/Home';
-import ProductFeature from './features/ProductFeature';
-import Member from './features/Member';
+import Routes from './routes';
+import LoginModal from './components/LoginModal';
 
-function App() {
+import useAuthCheck from './hooks/useAuthCheck';
+import useCartCount from './hooks/useCartCount';
+
+const App = () => {
+  useAuthCheck();
+  useCartCount();
+
   return (
     <div className="App">
-      <Routes>
-        <Route path='/*' element={<HomeFeature />}/>
-        <Route path='/todos/*' element={<TodoFeature />}/>
-        <Route path='/albums/*' element={<AlbumFeature />}/>
-        <Route path='/product/*' element={<ProductFeature />}/>
-        <Route path='/member/*' element={<Member />}/>
-        <Route path='*' element={<NotFound />}/>
-      </Routes>
+      <LoginModal />
+      <Routes />
     </div>
   );
 }

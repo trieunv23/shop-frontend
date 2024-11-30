@@ -1,19 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import './styles.scss';
+import { formatCurrency } from '../../utils/priceUtils';
 
-Product.propTypes = {
-    id: PropTypes.string,
-    imageUrl: PropTypes.string,
-    name: PropTypes.string,
-    price: PropTypes.string,
-    status: PropTypes.arrayOf(PropTypes.string),
-    url: PropTypes.string
-};
-
-function Product(props) {
-    const { id, imageUrl, name, price, status, url } = props;
-
+const Product = ({ id, imageUrl, name, price, status, url }) => {
     return (
         <div className="product">
             <div className="product-image">
@@ -23,15 +12,11 @@ function Product(props) {
             </div>
 
             <div className="product-text">
-                <div className="name">
-                    <a href={url}>
-                        <span>{name && name}</span>
-                    </a>
-                </div>
+                <a href={url}>
+                    <span>{name && name}</span>
+                </a>
 
-                <div className="price">
-                    <span>{price && price}</span>
-                </div>
+                <span>{formatCurrency(price)}</span>
 
                 { status && status.length > 0 && (
                     <div className="special-status">

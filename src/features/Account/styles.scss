@@ -1,0 +1,65 @@
+.member-account {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+
+  .account-wr {
+
+    .account-contents {
+      padding-top: 60px;
+
+      .account-main {
+        display: flex;
+  
+        .account-menu {
+          width: 250px;
+          min-width: 250px;
+          height: 90vh;
+      
+          .account-persional {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+      
+          .menu-list {
+            display: flex;
+            flex-direction: column;
+      
+            .menu-item {
+              display: flex;
+              align-items: center;
+              padding: 8px 14px;
+              text-decoration: none;
+              color: black;
+              cursor: pointer;
+      
+              .item-name {
+                margin-left: 10px;
+              }
+      
+              &.active {
+                background-color: rgb(235, 235, 240);;
+              }
+            }
+          }
+        }
+    
+        .account-detail {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            margin-left: 20px;
+            border: solid 1px #eee;
+            padding: 0px 30px;
+    
+            .detail-title {
+                padding: 18px 0;
+                border-bottom: solid 1px #eee;
+                margin-bottom: 20px;
+            }
+        }
+      }
+    }
+  }
+}

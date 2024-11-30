@@ -1,0 +1,98 @@
+.address-detail {
+    min-width: 100%;
+
+    .address-box {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        border: dashed 1px #eee;
+        margin-bottom: 10px;
+
+        .address-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 30px;
+
+            div {
+                margin-bottom: 5px;
+
+                & > span:first-child {
+                    color: rgba(85, 85, 85, .8);
+                }
+            }
+
+            .customer-name {
+                margin-bottom: 10px;
+            }
+
+            .address {
+                font-size: 14px;
+                line-height: 20px;
+            }
+
+            .phone-number {
+                font-size: 14px;
+            }
+        }
+
+        .address-action {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            
+            .action-btns {
+                display: flex;
+                gap: 10px;
+
+                .link-url {
+                    padding: 6px 20px;
+                    border: solid 1px #eee;
+                    text-decoration: none;
+                    color: black;
+                    background-color: white;
+                    cursor: pointer;
+                }
+
+                button {
+                    padding: 6px 20px;
+                    border: solid 1px #eee;
+                    text-decoration: none;
+                    color: black;
+                    background-color: white;
+                    cursor: pointer;
+                }
+            }
+
+            .action-infor {
+                padding: 6px 20px;
+                border: solid 1px #2a6f97;
+                color: #2a6f97;
+            }
+        }
+    }
+
+    .add-address {
+        width: 100%;
+        display: flex;
+        padding: 15px;
+        border: dashed 1px #2a6f97;
+        margin-bottom: 10px;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        color: black;
+        cursor: pointer;
+
+        .add-icon {
+            width: 26px;
+            height: 26px;
+        }
+
+        span {
+            margin-left: 10px;
+        }
+    
+    }
+}

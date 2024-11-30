@@ -1,0 +1,36 @@
+.address-edit {
+
+    .edit-form {
+        width: 70%;
+        display: flex;
+        flex-direction: column;
+
+        .edit-field {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+
+            .edit-title {
+                width: 150px;
+                font-size: 14px;
+            }
+
+            .edit-input {
+                width: calc(100% - 150px);
+                
+                input, select, textarea {
+                    width: 100%;
+                    padding: 8px 10px;
+                    border: solid 1px var(--color-border-input);
+                    outline: none;
+                }
+
+                button {
+                    width: 50%;
+                    padding: 8px 10px;
+                }
+            }
+        }
+    }
+}
