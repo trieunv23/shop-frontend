@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import './styles.scss';
 
 import Header from '../../../components/Header';
-import Money from '../../../components/icons/Money';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { API_URL } from '../../../constants/config';
 import { useNavigate } from 'react-router-dom';
+import { fetchDefaultAddress } from '../../../services/api/addressApi';
+import { fetchCart } from '../../../services/api/cartApi';
+import { createOrder } from '../../../services/api/orderApi';
 
 const Payment = () => {
     const navigate = useNavigate();
@@ -20,7 +22,6 @@ const Payment = () => {
 
     const { handleSubmit, control, formState: { errors }, setValue } = useForm({
         defaultValues: {
-            shippingMethod: 'fast',
             paymentMethod: 'cash_on_delivery',
         },
     });
@@ -28,30 +29,27 @@ const Payment = () => {
     const onSubmit = async(data) => {
         console.log(data);
 
+        if (!data.paymentMethod) {
+            alert('Chọn phương thức thanh toán.');
+            return;
+        }
+
         if (!address) {
             alert('Chưa có địa chỉ mặc định.');
             return;
         }
 
         try {
-            if (data.paymentMethod === 'vnpay') {
-                const response = await axios.post(`${API_URL}/vnpay_payment`);
-                console.log(response);
-            } else {
-                const response  = await axios.post(`${API_URL}/create-order`, {
-                    shipping_method: data.shippingMethod,
-                    payment_method: data.paymentMethod === 'cash_on_delivery' 
-                                    ? data.paymentMethod 
-                                    : data.paymentMethod === 'tpbank' || data.paymentMethod === 'viettelmoney' 
-                                    ? 'bank_transfer' 
-                                    : '',
-                }, { withCredentials: true });
+            const { order } = await createOrder({ method: data.paymentMethod });
 
-                const order = response.data.order;
-                console.log(response);
-                
+            console.log(order);
+            
+            if (data.paymentMethod === 'bank_transfer') {
                 navigate(`/checkout/payment/${order.id}`);  
-            }  
+            } else {
+                alert('Thanh toán thành công');
+                navigate(`/order/detail/${order.id}`);  
+            }
         } catch (error) {
             console.log(error);
         }
@@ -61,9 +59,8 @@ const Payment = () => {
         const loadAddressDefault = async() => {
             setLoading(true);
             try {
-                const response = await axios.get(`${API_URL}/get-default-address`, { withCredentials: true });
-                setAddress(response.data.address);
-                console.log(response.data.address);
+                const { address } = await fetchDefaultAddress();
+                setAddress(address);
             } catch (error) {
                 console.log(error);
             } finally {
@@ -78,13 +75,10 @@ const Payment = () => {
         const loadCart = async() => {
             setLoading(true);
             try {
-                const response = await axios.get(`${API_URL}/get-cart`, { withCredentials: true });
-                if (response.status === 200) {
-                    console.log(response.data);
-                    setCart(response.data.cart);
-                    setProducts(response.data.products);
-                    setTotalPrice(response.data.totalPrice);
-                }
+                const { cart, products, totalPrice } = await fetchCart();
+                setProducts(products);
+                setCart(cart);
+                setTotalPrice(totalPrice);
             } catch (error) {
                 console.log(error.response);
             } finally {
@@ -113,11 +107,11 @@ const Payment = () => {
                                     { address ? 
                                         <div className="transport">
                                             <div className="customer-infor">
-                                                <p className='customer-name'>{ address.customer_name }</p>
+                                                <p className='customer-name'>{ address.name }</p>
                                                 <div className="partition">
 
                                                 </div>
-                                                <p className='customer-phone'>SĐT: { address.phone_number }</p>
+                                                <p className='customer-phone'>SĐT: { address.phoneNumber }</p>
                                             </div>
 
                                             <div className="address">
@@ -139,11 +133,11 @@ const Payment = () => {
                                         { products && products.map((product, index) => (
                                             <div key={index} className="product-item">
                                                 <div className="product-image">
-                                                    <img src={`${API_URL}/storage/${product.product.image}`} alt="" />
+                                                    <img src={`${API_URL}/storage/${product.imgPath}`} alt="" />
                                                 </div>
     
                                                 <div className="product-infor">
-                                                    <div className="product-name">{ product.product.name }</div>
+                                                    <div className="product-name">{ product.name }</div>
                                                     <div className="product-text">
                                                         <span>SL: { product.quantity }</span>
                                                         <span className='total-item'>
@@ -171,6 +165,7 @@ const Payment = () => {
                                             render={({ field }) => (
                                                 <>
                                                     <input 
+                                                        id='cash_on_delivery'
                                                         type="radio"
                                                         value={'cash_on_delivery'} 
                                                         {...field}
@@ -178,8 +173,8 @@ const Payment = () => {
                                                         onChange={() => setValue('paymentMethod', 'cash_on_delivery')}
                                                     />
                                                     <span className='option-infor'>
-                                                        <Money className='option-img' />
-                                                        <label htmlFor="money">Thanh toán bằng tiền mặt</label>
+                                                        <img src="/images/money.png" alt="" className='option-img' />
+                                                        <label htmlFor="cash_on_delivery">Thanh toán bằng tiền mặt</label>
                                                     </span>
                                                 </>
                                             )}
@@ -193,89 +188,16 @@ const Payment = () => {
                                             render={({ field }) => (
                                                 <>
                                                     <input 
+                                                        id='bank_transfer'
                                                         type="radio"
-                                                        value={'vnpay'} 
+                                                        value={'bank_transfer'} 
                                                         {...field}
-                                                        checked={field.value === 'vnpay'}
-                                                        onChange={() => setValue('paymentMethod', 'vnpay')}
+                                                        checked={field.value === 'bank_transfer'}
+                                                        onChange={() => setValue('paymentMethod', 'bank_transfer')}
                                                     />
                                                     <span className='option-infor'>
-                                                        <img src='https://scontent.fdad2-1.fna.fbcdn.net/v/t39.30808-6/453247051_895663219261867_7610666258558796060_n.jpg?_nc_cat=1&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeFmkJ0naO-7at6Oq_OhEDhPT1AnQUFvop1PUCdBQW-incoF-PUgevr7FiGEeBMEFGVjByxRNn7j_HCGB7QNh4YQ&_nc_ohc=9B-T9HKypgkQ7kNvgGOvPKt&_nc_zt=23&_nc_ht=scontent.fdad2-1.fna&_nc_gid=APM_wMYP6h3u4MkIRZvNY9H&oh=00_AYCS_aJ5hMftTPuF8f7O3izzrReRg6Yp0kn96LnjFszjog&oe=672FB63A' className='option-img' />
-                                                        <label htmlFor="money">VN PAY</label>
-                                                    </span>
-                                                </>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="option-payment">
-                                        <Controller 
-                                            name='paymentMethod'
-                                            control={control}
-                                            render={({ field }) => (
-                                                <>
-                                                    <input 
-                                                        type="radio"
-                                                        value={'viettelmoney'} 
-                                                        {...field}
-                                                        checked={field.value === 'viettelmoney'}
-                                                        onChange={() => setValue('paymentMethod', 'viettelmoney')}
-                                                    />
-                                                    <span className='option-infor'>
-                                                        <img src='https://salt.tikicdn.com/ts/upload/5f/f9/75/d7ac8660aae903818dd7da8e4772e145.png' className='option-img' />
-                                                        <label htmlFor="money">Viettel Money</label>
-                                                    </span>
-                                                </>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="payment-field">
-                                <div className="title-field">
-                                    <span>Chọn Phương Thức Vận chuyển</span>
-                                </div>
-
-                                <div className="field-content flex-column">
-                                    <div className="option-payment">
-                                        <Controller 
-                                            name='shippingMethod'
-                                            control={control}
-                                            render={({ field }) => (
-                                                <>
-                                                    <input 
-                                                        type="radio" 
-                                                        id='fast'
-                                                        value='fast'
-                                                        {...field}
-                                                        checked={field.value === 'fast'}  
-                                                        onChange={() => setValue('shippingMethod', 'fast')}                                                  
-                                                    />
-                                                    <span className='option-infor'>
-                                                        <label htmlFor="fast">Vận chuyển nhanh</label>
-                                                    </span>
-                                                </>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="option-payment">
-                                        <Controller 
-                                            name='shippingMethod'
-                                            control={control}
-                                            render={({ field }) => (
-                                                <>
-                                                    <input 
-                                                        type="radio" 
-                                                        id='save'
-                                                        value='save'
-                                                        {...field}
-                                                        checked={field.value === 'save'}   
-                                                        onChange={() => setValue('shippingMethod', 'save')}                                             
-                                                    />
-                                                    <span className='option-infor'>
-                                                        <label htmlFor="save">Tiết kiệm</label>
+                                                        <img src='/images/bank.png' alt='' className='option-img' />
+                                                        <label htmlFor="bank_transfer">Thanh toán qua tài khoản ngân hàng</label>
                                                     </span>
                                                 </>
                                             )}
@@ -309,7 +231,7 @@ const Payment = () => {
                                     </div>
 
                                     <div className='btn-payment'>
-                                        <button type='submit'>MUA HÀNG</button>
+                                        <button type='submit'>Mua Hàng</button>
                                     </div>
                                 </div>
                             </div>

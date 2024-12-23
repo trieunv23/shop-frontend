@@ -4,19 +4,22 @@ import './styles.scss';
 import { Button, Table } from 'antd';
 import { API_URL } from '../../../../../constants/config';
 import axios from 'axios';
-import { render } from '@testing-library/react';
+import { useNavigate } from 'react-router-dom';
+import { fetchPayments } from '../../../../../services/api/admin/paymentApi';
+import { confirmPayment } from '../../../../../services/api/admin/orderApi';
 
 const Payments = () => {
+    const navigate = useNavigate();
     const [payments, setPayments] = useState([]);
     const [filteredPayments, setFilteredPayments] = useState([]);
 
     useEffect(() => {
         const loadPayments = async() => {
             try {
-                const response = await axios.get(`${API_URL}/get-payments`, { withCredentials: true });
-                setPayments(response.data.payments);
-                setFilteredPayments(response.data.payments);
-                console.log(response.data.payments);
+                const { payments } = await fetchPayments();
+                setPayments(payments);
+                setFilteredPayments(payments);
+                console.log(payments);
             } catch (error) {
                 console.log(error.response);
             }
@@ -25,31 +28,30 @@ const Payments = () => {
         loadPayments();
     }, []); 
 
+    console.log(payments);
+
     const handleStatusChange = (e) => {
         const status = e.target.value;
 
         if (status === '') {
             setFilteredPayments(payments);
         } else {
-            const filtered = payments.filter(payment => payment.paymentStatus === status);
+            const filtered = payments.filter(payment => payment.status === status);
             setFilteredPayments(filtered);
         }
     };
     
-    const handleDetail = (paymentId) => {
-
+    const handleDetail = (orderId) => {
+        navigate(`/admin/order/detail/${orderId}`);
     }
 
-    const handleConfirm = async(paymentId) => {
+    const handleConfirm = async(orderId) => {
         try {
-            const formData = new FormData();
-            formData.append('payment_id', paymentId);
-
-            const response =  await axios.post(`${API_URL}/confirm-payment-admin`, formData, { withCredentials: true });
+            await confirmPayment(orderId);
 
             const updatedPayments = payments.map(payment => {
-                if (payment.id === paymentId) {
-                    return { ...payment, paymentStatus: 'confirmed' };
+                if (payment.orderId === orderId) {
+                    return { ...payment, status: 'confirmed' };
                 }
                 return payment;
             });
@@ -66,20 +68,20 @@ const Payments = () => {
     const columns = [
         {
             title: 'Mã đơn hàng',
-            dataIndex: 'orderCode',
-            key: 'orderCode',
+            dataIndex: 'code',
+            key: 'code',
         },
         {
             title: 'Ngày thanh toán',
-            dataIndex: 'paymentDate', 
-            key: 'paymentDate',
+            dataIndex: 'date', 
+            key: 'date',
         },
         {
             title: 'Phương thức thanh toán',
-            dataIndex: 'paymentMethod',
-            key: 'paymentMethod',
+            dataIndex: 'method',
+            key: 'method',
             render: (text, record) => {
-                switch (record.paymentMethod) {
+                switch (record.method) {
                     case 'cash_on_delivery':
                         return <span>Trực tiếp</span>;
                     case 'bank_transfer':
@@ -91,16 +93,18 @@ const Payments = () => {
         },
         {
             title: 'Trạng thái',
-            dataIndex: 'paymentStatus',
-            key: 'paymentStatus',
+            dataIndex: 'status',
+            key: 'status',
             render: (text, record) => {
-                switch (record.paymentStatus) {
+                switch (record.status) {
                     case 'pending':
                         return <span style={{ color: 'orange' }}>Chưa thanh toán</span>;
                     case 'confirmed':
                         return <span style={{ color: 'green' }}>Đã xác nhận</span>;
                     case 'waiting_for_confirmation':
                         return <span style={{ color: 'gray' }}>Đang chờ xác nhận</span>;
+                    case 'refused':
+                        return <span style={{ color: 'red' }}>Đã từ chối</span>;
                     default:
                         return <span>{text}</span>;
                 }
@@ -108,21 +112,21 @@ const Payments = () => {
         },
         {
             title: 'Tổng tiền',
-            dataIndex: 'paymentAmount',
-            key: 'paymentAmount',
+            dataIndex: 'totalAmount',
+            key: 'totalAmount',
         },
         {
             title: 'Mã thanh toán',
-            dataIndex: 'paymentCode',
-            key: 'paymentCode',
+            dataIndex: 'code',
+            key: 'code',
         },
         {
             title: 'Hành động',
             key: 'action',
             render: (text, record) => (
                 <div>
-                    <Button onClick={() => handleDetail(record.id)}>Chi tiết</Button> 
-                    <Button onClick={() => handleConfirm(record.id)}>Xác nhận</Button>
+                    <Button onClick={() => handleDetail(record.orderId)}>Chi tiết</Button> 
+                    <Button onClick={() => handleConfirm(record.orderId)}>Xác nhận</Button>
                 </div>
             )
         },
@@ -142,6 +146,7 @@ const Payments = () => {
                     <option value="pending">Chưa thanh toán</option>
                     <option value="waiting_for_confirmation">Đang xác nhận</option>
                     <option value="confirmed">Đã xác nhận</option>
+                    <option value="refused">Đã từ chối</option>
                 </select>
             </div>
 

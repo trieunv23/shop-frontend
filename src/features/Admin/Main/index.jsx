@@ -6,6 +6,7 @@ import Group from '../../../components/icons/Group';
 import { Link, Outlet } from 'react-router-dom';
 import ProductIcon from '../../../components/icons/Product';
 import IconCategory from '../../../components/icons/Category';
+import Payment from '../../../components/icons/Payment';
 
 const AdminMain = () => {
 
@@ -81,6 +82,19 @@ const AdminMain = () => {
 
                                 <div className="item-name">
                                     Phân loại
+                                </div>
+                            </Link>
+
+                            <Link
+                                className="menu-item"
+                                to='payment'
+                            >
+                                <div className="item-icon">
+                                    <Payment width={'26px'} height={'26px'}/>
+                                </div>
+
+                                <div className="item-name">
+                                    Thanh toán
                                 </div>
                             </Link>
                         </div>

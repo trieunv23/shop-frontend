@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './styles.scss';
 import classNames from 'classnames';
+import { API_URL } from '../../../../constants/config';
+import { Link } from 'react-router-dom';
 
 const SlideShow = ({ slides }) => {  
     const [currentSlide, setCurrentSlide] = useState(1);
@@ -13,6 +15,8 @@ const SlideShow = ({ slides }) => {
     const [slideWidth, setSlideWidth] = useState(0);
     const isResizing = useRef(false);
     const [isClick, setIsClick] = useState(false);
+
+    console.log(slides);
 
     const clonedSlides = slides ? [slides[slides.length -1], ...slides, slides[0]] : [];
 
@@ -153,13 +157,13 @@ const SlideShow = ({ slides }) => {
                     return (
                         <div 
                             key={index}
-                            className={`slide ${currentSlide === index ? 'active' : ''} ${slide.color}`}
+                            className={`slide ${currentSlide === index ? 'active' : ''}`}
                             aria-label={`${realIndex + 1} / ${clonedSlides.length - 2}`}
                             data-index={`${index}`}
                         >
-                            <a href={slide.href} onClick={handleLinkClick}>
-                                <img src={slide.imageUrl} alt="" />
-                            </a>
+                            <Link to={slide?.target} onClick={(e) => handleLinkClick(e)}>
+                                <img src={`${API_URL}/storage/${slide?.path}`} alt="" />
+                            </Link>
                         </div>
                     );
             })}

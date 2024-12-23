@@ -8,6 +8,7 @@ import Main from '../features/Main';
 import Account from '../features/Account';
 import Purchase from '../features/Order';
 import Profile from '../features/Account/Profile';
+import Email from '../features/Account/Email';
 import Address from '../features/Account/Address';
 import Addresses from '../features/Account/Address/Addresses';
 import AddressForm from '../features/Account/Address/AddressForm';
@@ -16,6 +17,7 @@ import AdminLogin from '../features/Admin/Login';
 import AdminMain from '../features/Admin/Main';
 import Customers from '../features/Admin/Main/Customers';
 import Dashboard from '../features/Admin/Main/Dashboard';
+import AdminBanner from '../features/Admin/Main/Banner';
 import AdminOrder from '../features/Admin/Main/Order';
 import AdminOrders from '../features/Admin/Main/Order/Orders';
 import AdminOrderDetail from '../features/Admin/Main/Order/OrderDetail';
@@ -66,6 +68,13 @@ const Routes = () => {
                     ]
                 },
                 { 
+                    path: path.email, 
+                    element: <Email />,
+                    children: [
+
+                    ]
+                },
+                { 
                     path: path.address, 
                     element: <Address />,
                     children: [
@@ -91,7 +100,11 @@ const Routes = () => {
                     element: <AdminMain />,
                     children: [
                         { path: path.adCustomers, element: <Customers /> },
-                        { path: path.adDashboard, element: <Dashboard /> },
+                        { 
+                            path: path.adDashboard, 
+                            element: <Dashboard />,
+                        },
+                        { path: path.adBanner, element: <AdminBanner /> },
                         { 
                             path: path.adOrder, 
                             element: <AdminOrder />, 

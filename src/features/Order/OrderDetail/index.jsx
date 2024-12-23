@@ -2,101 +2,54 @@ import React, { useEffect, useState } from 'react';
 import './styles.scss';
 import axios from 'axios';
 import { API_URL } from '../../../constants/config';
-import { useParams } from 'react-router-dom';
-import { generateStatus } from '../../../utils/orderUtils';
-import { Steps, Button, message } from 'antd';
-import { ShoppingCartOutlined, SolutionOutlined, CarOutlined, HomeOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatCurrency } from '../../../utils/priceUtils';
 import { formatDate } from '../../../utils/dateUtils';
+import { getOrderStatus } from '../../../utils/orderUtils';
+import { fetchOrder } from '../../../services/api/orderApi';
+import OrderHistory from '../../../components/OrderHistory';
 
-const { Step } = Steps;
-
-const getCurrentStep = (order) => {
-    if (!order) return 0;
-
-    if (order.orderStatus === 'delivered' && order.orderSchedule.status === 'shipped') {
-        return 3;
-    }
-    if (['confirmed', 'delivered'].includes(order.orderStatus) && order.orderSchedule.status === 'in_transit') {
-        return 2;
-    }
-    if (order.orderStatus === 'confirmed' && order.orderSchedule.status === 'confirmed') {
-        return 1;
-    } 
-    if (order.orderStatus === 'pending') {
-        return 0;
-    }
-    
-    return 0;
-};
-
-const getOrderStatus = (order) => {
-    if (!order) {
+const getPaymentMethod = (method) => {
+    if (!method) {
         return 'Không xác định';
     }
 
-    if (order.orderStatus === 'delivered' && order.orderSchedule.status === 'shipped') {
-        return 'Hoàn Thành';
-    }
-    if (['confirmed', 'delivered'].includes(order.orderStatus) && order.orderSchedule.status === 'in_transit') {
-        return 'Đang Giao Hàng';
-    }
-    if (order.orderStatus === 'confirmed' && order.orderSchedule.status === 'confirmed') {
-        return 'Chờ Giao Hàng';
-    } 
-    if (order.orderStatus === 'cancelled') {
-        return 'Đã Hủy Đơn Hàng';
-    }
-    if (order.orderStatus === 'pending') {
-        return 'Chờ Xác Nhận';
-    }
+    const paymentMethodMap = {
+        'cash_on_delivery': 'Thanh toán khi giao hàng',
+        'bank_transfer': 'Thanh toán bằng tài khoản ngân hàng',
+        'paypal': 'Paypal',
+        'credit_card': 'Thanh toán bằng thẻ tín dụng'
+    };
+
+    return paymentMethodMap[method] || 'Không xác định';
 }
 
-const getPaymentMethod = (order) => {
-    if (!order) {
+const getPaymentStatus = (status) => {
+    if (!status) {
         return 'Không xác định';
     }
 
-    switch(order.orderPayment.paymentMethod) {
-        case 'cash_on_delivery' :
-            return 'Thanh toán khi giao hàng';
-        case 'bank_transfer' : 
-            return 'Thanh toán bằng tài khoản ngân hàng';
-        case 'paypal' :
-            return 'Paypal';
-        case 'credit_card' : 
-            return 'Thanh toán bằng thẻ tín dụng';
-        default: return 'Không xác định';
-    }
-}
+    const paymentStatusMap = {
+        'pending': 'Chưa thanh toán',
+        'waiting_for_confirmation': 'Đang chờ xác nhận',
+        'confirmed': 'Đã thanh toán',
+        'failed': 'Thanh toán thất bại'
+    };
 
-const getPaymentStatus = (order) => {
-    if (!order) {
-        return 'Không xác định';
-    }
-
-    switch(order.orderPayment.paymentStatus) {
-        case 'pending' :
-            return 'Chưa thanh toán';
-        case 'completed' : 
-            return 'Đã thanh toán';
-        case 'failed' :
-            return 'Thanh toán thất bại';
-        default: return 'Không xác định';
-    }
+    return paymentStatusMap[status] || 'Không xác định';
 }
 
 const OrderDetail = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const [order, setOrder] = useState(null);
 
     useEffect(() => {
         const loadOrders = async() => {
             try {
-                const response = await axios.get(`${API_URL}/get-order/${id}`, { withCredentials: true });
-                setOrder(response.data.order);
-                console.log(response.data.order);
+                const { order } = await fetchOrder(id);
+                setOrder(order);
+                console.log(order);
             } catch (error) {
                 console.log(error);
             }
@@ -105,6 +58,31 @@ const OrderDetail = () => {
         loadOrders();
     }, []);
 
+    const handleCancelOrder = async() => { 
+        try { 
+            const response = await axios.post(`${API_URL}/cancel-order`, { 
+                order_id: order.id 
+            }, { withCredentials: true }); 
+            alert(response.data.message); 
+            navigate(0);
+        } catch (error) { 
+            console.error('Failed to cancel order:', error); 
+        } 
+    };
+
+    const handleConfirmedReceiptOrder = async() => {
+        try { 
+            const response = await axios.post(`${API_URL}/confirmed_receipt`, { 
+                order_id: order.id 
+            }, { withCredentials: true }); 
+            alert(response.data.message); 
+
+            navigate(0);
+        } catch (error) { 
+            console.error('Failed to complete shipping:', error); 
+        }
+    }
+
     if (!order) {
         return (
             <div>
@@ -112,32 +90,7 @@ const OrderDetail = () => {
             </div>
         );
     }
-
-    const steps = [
-        {
-          title: 'Đơn Hàng Được Đặt',
-          description: order?.orderSchedule ? formatDate(order.orderSchedule.orderDate) : '',
-          icon: <ShoppingCartOutlined />,
-        },
-        {
-            title: 'Xác Nhận Đơn Hàng',
-            description: order?.orderSchedule ? formatDate(order.orderSchedule.confirmationDate) : '',
-            icon: <SolutionOutlined />,
-          },
-        {
-          title: 'Chờ Giao Hàng',
-          description: order?.orderSchedule ? formatDate(order.orderSchedule.deliveryDate) : '',
-          icon: <CarOutlined />,
-        },
-        {
-          title: 'Giao Hàng Thành Công',
-          description: order?.orderSchedule ? formatDate(order.orderSchedule.deliveredDate) : '',
-          icon: <CheckCircleOutlined />,
-        },
-    ];
-
-    // const progressIndex = 
-
+    
     return (
         <div className='order-container'>
             <div className="wrap">
@@ -150,9 +103,9 @@ const OrderDetail = () => {
                                 </div>
 
                                 <div className="field-contents">
-                                    <span>Mã đơn hàng: {order.orderCode}</span>
-                                    <span>Trạng thái: {getOrderStatus(order)}</span>
-                                    <span>Ngày đặt hàng: {order.orderSchedule.orderDate}</span>
+                                    <span>Mã đơn hàng: {order.code}</span>
+                                    <span>Trạng thái: {getOrderStatus(order.status)}</span>
+                                    <span>Ngày đặt hàng: {formatDate(order.orderDate)}</span>
                                 </div>
                             </div>
 
@@ -163,13 +116,13 @@ const OrderDetail = () => {
 
                                 <div className="field-contents">
                                     <span className="customer-infor">
-                                        <span>{order.orderSchedule.shippingAddress.name}</span>
+                                        <span>{order.address.name}</span>
                                         <span className="partition"></span>
-                                        <span>{order.orderSchedule.shippingAddress.phone}</span>
+                                        <span>{order.address.phoneNumber}</span>
                                     </span>
 
                                     <span className="address-content-infor">
-                                        <span>{order.orderSchedule.shippingAddress.address}</span>
+                                        <span>{order.address.address}</span>
                                     </span>
                                 </div>
                             </div>
@@ -190,7 +143,7 @@ const OrderDetail = () => {
 
                                                     <div className="product-infor">
                                                         <span className="product-name">
-                                                            {product.productName}
+                                                            {product.name}
                                                         </span>
 
                                                         <span className="product-classify">
@@ -240,35 +193,32 @@ const OrderDetail = () => {
 
                                 <div className="field-contents">
                                     <div className="order-progress">
-                                        { !order.orderStatus === 'cancelled' ? 
-                                            <Steps current={getCurrentStep(order)}>
-                                                {steps.map((step, index) => (
-                                                    <Step 
-                                                        key={index} 
-                                                        title={step.title} 
-                                                        description={step.description} 
-                                                        icon={step.icon} 
-                                                    />
-                                                ))}
-                                            </Steps>
+                                        { order.status !== 'cancelled' ? 
+                                            <div className="order-schedule">
+                                                <OrderHistory history={order.history}/>
+                                                <div className="order-action">
+                                                    <div className="action-item">
+                                                        <button
+                                                            disabled={order.status !== 'delivered'}
+                                                            onClick={handleConfirmedReceiptOrder}
+                                                        >Đã Nhận Hàng</button>
+                                                    </div>
+
+                                                    <div className="action-item">
+                                                        <button 
+                                                            disabled={!['pending', 'confirmed'].includes(order.status)}
+                                                            onClick={handleCancelOrder}
+                                                        >
+                                                            Hủy Đơn Hàng</button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             : <div className='cancelled-status'>
                                                 <span className='cancelled-tile'>Đơn hàng đã được hủy</span>
-                                                <span className='cancelled-date'>{order.orderSchedule.cancelledDate}</span>
+                                                <span className='cancelled-date'>{order.cancelledDate}</span>
                                             </div>
                                         }
                                     </div>
-
-                                    { !order.orderStatus === 'cancelled' && 
-                                        <div className="order-action">
-                                            <div className="action-item">
-                                                <button>Đã Nhận Hàng</button>
-                                            </div>
-
-                                            <div className="action-item">
-                                                <button disabled={['in_transit', 'shipped'].includes(order.orderSchedule.status)}>Hủy Đơn Hàng</button>
-                                            </div>
-                                        </div>
-                                    }
                                 </div>
                             </div>
 
@@ -278,12 +228,16 @@ const OrderDetail = () => {
                                 </div>
 
                                 <div className="field-contents">
-                                    <span>Tổng thanh toán: {formatCurrency(order.orderPayment.paymentAmount)}</span>
-                                    <span>Phương thức thanh toán: {getPaymentMethod(order)}</span>
-                                    <span>Trạng thái: {getPaymentStatus(order)}</span>
-                                    {(order.orderPayment.paymentStatus === 'pending' || order.orderPayment.paymentStatus === 'failed') ?
+                                    <span>Tổng thanh toán: {formatCurrency(order.payment.totalAmount)}</span>
+                                    <span>Phương thức thanh toán: {getPaymentMethod(order.payment.method)}</span>
+                                    <span>Trạng thái: {getPaymentStatus(order.payment.status)}</span>
+                                    {['pending', 'failed'].includes(order.payment.status) ?
                                         <div className="payment-btn">
-                                            <button>Thanh Toán</button>
+                                            <Link 
+                                                to={`/checkout/payment/${order.id}`}
+                                            >
+                                                Thanh toán
+                                            </Link>
                                         </div> 
                                         : <div></div>
                                     }

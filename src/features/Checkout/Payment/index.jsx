@@ -2,21 +2,24 @@ import React, { useEffect, useState } from 'react';
 import './styles.scss';
 
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { API_URL } from '../../../constants/config';
 import { formatCurrency } from '../../../utils/priceUtils';
 import { InboxOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Controller, useForm } from 'react-hook-form';
 import { isValidateImageFile } from '../../../utils/fileUpload';
+import { confirmPayment, fetchPayments } from '../../../services/api/orderApi';
 
 const { Dragger } = Upload;
 
 const Payment = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const [order, setOrder] = useState(null);
     const [bank, setBank] = useState(null);
     const [qrCode, setQrCode] = useState(null);
+    const [payment, setPayment] = useState(null);
 
     const [imagePreview, setImagePreview] = useState(null);
 
@@ -29,22 +32,16 @@ const Payment = () => {
     const onSubmit = async(data) => {
         if (data && data.file) {
             try {
-                const formData = new FormData();
-                formData.append('order_id', order.id);
-                formData.append('file', data.file);
+                await confirmPayment(order.id, { file: data.file });
 
-                const response = await axios.post(`${API_URL}/confirm-payment`, formData, { 
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    }
-                 });
-
-                console.log(response);
                 alert('Thanh toán thành công.');
+                navigate(`/order/detail/${order.id}`);  
             } catch (error) {
+                alert('Lỗi khi gửi ảnh, thử lại sau.');
                 console.log(error.response);
             }
+        } else {
+            alert('Chưa có ảnh.');
         }
     }
 
@@ -71,11 +68,14 @@ const Payment = () => {
     useEffect(() => {
         const loadPayment = async() => {
             try {
-                const response = await axios.get(`${API_URL}/payment/${id}`, { withCredentials: true });
-                console.log(response.data);
-                setQrCode(response.data.qrCode);
-                setBank(response.data.bank);
-                setOrder(response.data.order);
+                const { bank, order, payment, qrCode } = await fetchPayments(id);
+               
+                console.log(payment);
+
+                setQrCode(qrCode);
+                setBank(bank);
+                setOrder(order);
+                setPayment(payment);
             } catch (error) {
                 console.log(error.response);
             }
@@ -95,7 +95,7 @@ const Payment = () => {
                     <form className="payment-content" onSubmit={handleSubmit(onSubmit)}>
                         <div className="payment-field">
                             <span className='payment-field-title'>Tổng tiền hàng</span>
-                            <span className='payment-field-value'>{formatCurrency(order.totalAmount)}</span>
+                            <span className='payment-field-value'>{formatCurrency(payment.totalAmount)}</span>
                         </div>
                         <div className="payment-field">
                             <span className='payment-field-title'>Số Tài Khoản</span>
@@ -107,7 +107,7 @@ const Payment = () => {
                         </div>
                         <div className="payment-field">
                             <span className='payment-field-title'>Nội dung chuyển khoản</span>
-                            <span className='payment-field-value'>{bank.paymentCode}</span>
+                            <span className='payment-field-value'>{payment.code}</span>
                         </div>
 
                         <div className="file-upload">

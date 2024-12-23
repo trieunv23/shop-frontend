@@ -1,11 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './styles.scss';
 import { Controller, useForm } from "react-hook-form";
-import axios from 'axios';
 
 import DayOfBirthSelector from '../../../components/DateOfBirthSelector';
-import Phone from '../../../components/icons/Phone';
-import Mail from '../../../components/icons/Mail';
 import GenderSelector from '../../../components/GenderSelector';
 import ResultHandle from '../../../components/ResultHandle/inex';
 
@@ -13,78 +10,81 @@ import { useAccountStatus } from '../../../context/AccountStatusContext';
 import { isValidBirthDate } from '../../../utils/dateUtils';
 import { isValidDateMinLengthString } from '../../../utils/stringUtils';
 
-import { API_URL } from '../../../constants/config';
+import { API_URL, MESSAGE } from '../../../constants/config';
+import _ from 'lodash';
+import { updateProfile } from '../../../services/api/userApi';
+import { validateEmail, validatePhoneNumber } from '../../../utils/fieldUtils';
+import { fetchUser } from '../../../services/api/userApi';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
     const { setOptionSelected } = useAccountStatus();
 
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState('');
 
-    const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [initialUserData, setInitialUserData] = useState(null);
 
-    const { handleSubmit, control, setValue, formState: { errors } } = useForm({
+    const { handleSubmit, control, setValue, formState: { errors }, trigger } = useForm({
         mode: 'onChange',
         defaultValues: {
-            name: '',
+            name: '', 
+            phoneNumber: '',
+            email: '',
             gender: '',
-            day_of_birth: '',
+            dayOfBirth: '',
         }
     });
-
-    const updateUserProfile = async (data) => {
-        try {
-            const response = await axios.put(`${API_URL}/update-profile`, data, { withCredentials: true });
-
-            if (response.status === 200) {
-                console.log('Update success');
-                setIsSuccess(true);
-                return response.data.user;
-            } else {
-                // Do something ? 
-                console.log('Update Error!');
-            }
-        } catch (error) {
-            console.log(error.response);
-        }
-    }
 
     const onSubmit = async(data) => {
         if (initialUserData) {
             const isUpdated = Object.keys(data).some((key) => data[key] !== initialUserData[key]);
             if (isUpdated) {
-                if (
-                    isValidBirthDate(data.day_of_birth) &&
-                    isValidDateMinLengthString(data.name, 3) &&
-                    data.gender !== null && data.gender !== ''
-                ) {
-                    const user = await updateUserProfile(data);
-                } else {
-                    alert('Thông tin không hợp lệ.');
+                try {
+                    const { name, gender, dayOfBirth } = data;
+
+                    const profileData = _.mapKeys({
+                        name,
+                        gender,
+                        dayOfBirth
+                        }, (value, key) => _.snakeCase(key)
+                    );
+                    
+                    const isUpdated = await updateProfile(profileData);
+    
+                    if (isUpdated) {
+                        alert(MESSAGE.SUCCESS.USER_PROFILE_UPDATED);
+                    } else {
+                        alert(MESSAGE.ERROR.USER_PROFILE_UPDATE_ERROR);
+                    }
+                } catch (error) {
+                    setError(error.message);
+                    alert(MESSAGE.ERROR.GENERAL_ERROR);
                 }
             }
         }
     }
 
     useEffect(() => {
-        setOptionSelected('profile');
-    }, []);
+        const loadUser = async() => {
+            try {
+                const { profile } = await fetchUser();
 
-    useEffect(() => {
-        const getUser = async() => {
-            const response = await axios.get(`${API_URL}/get-user`, { withCredentials: true });
-            if (response.status === 201) {
-                const userData = response.data.user;
-                setUser(userData);
-                setInitialUserData(userData.profile || {});
+                setProfile(profile);
+                setInitialUserData(profile);
 
-                setValue('name', userData.profile?.name || '');
-                setValue('gender', userData.profile?.gender || '');
-                setValue('day_of_birth', userData.profile?.day_of_birth || '');
+                const profileFields = ['name', 'phoneNumber', 'email', 'gender', 'dayOfBirth'];
+
+                profileFields.forEach(field => {
+                    setValue(field, profile?.[field] || '');
+                });
+            } catch (error) {
+                
             }
         }
 
-        getUser();
+        loadUser();
     }, []);
 
     const hasErrors = Object.keys(errors).length > 0;
@@ -98,101 +98,121 @@ const Profile = () => {
             /> 
             
             <div className="profile-persional">
-                <div className="infor-field">
-                    <span className='infor-title'>Họ & Tên</span>
-                    <Controller 
-                        name='name'
-                        control={control}
-                        rules={{
-                            required: 'Tên không được để trống.',
-                            minLength: { value: 3, message: 'Tên phải có ít nhất 3 ký tự.' }
-                        }}
-                        render={({ field }) => (
-                            <>
-                                <input
-                                    {...field} 
-                                    type='text' 
-                                />
-                                {errors.name && <span className="error-message">{errors.name.message}</span>}
-                            </>
-                        )}
-                    />
+                <div className="profile-title">
+                    Thông tin tài khoản
                 </div>
 
-                <div className="infor-field">
-                    <span className='infor-title'>Ngày Sinh</span>
-                    <Controller 
-                        name='day_of_birth'
-                        control={control}
-                        rules={{
-                            validate: value => isValidBirthDate(value) || 'Ngày sinh không hợp lệ, hãy chọn lại ngày khác'
-                        }}
-                        render={({ field }) => (
-                            <>
-                                <DayOfBirthSelector 
-                                    {...field}
-                                />
-                                {errors.day_of_birth && <span className="error-message">{errors.day_of_birth.message}</span>}
-                            </>
-                        )}
-                    />
-                    
-                </div>
-
-                <div className="infor-field">
-                    <span className='infor-title'>Giới tính</span>
-                    <div className="input-text">
-                        <Controller 
-                            name='gender'
-                            control={control}
-                            render={({ field }) => (
-                                <GenderSelector 
-                                    {...field}
-                                />
-                            )}
-                        />
-                    </div>
-                </div>
-
-                <div className="btn-submit">
-                    <button disabled={hasErrors}>Lưu Thay Đổi</button>
-                </div>
-            </div>
-
-            <div className="vertical"></div>
-
-            <div className="profile-contact">
-                <div className="contact-field">
-                    <div className="contact-content">
-                        <div className="contact-icon">
-                            <Phone />
+                <div className="persional-content">
+                    <div className="infor-field">
+                        <span className='infor-title'>Họ & Tên</span>
+                        <div className="input-data">
+                            <Controller 
+                                name='name'
+                                control={control}
+                                rules={{
+                                    required: 'Tên không được để trống.',
+                                    minLength: { value: 3, message: 'Tên phải có ít nhất 3 ký tự.' }
+                                }}
+                                render={({ field }) => (
+                                    <input
+                                        {...field} 
+                                        type='text' 
+                                    />
+                                )}
+                            />
                         </div>
+                        {errors.name && <span className="error-message">{errors.name.message}</span>}
+                    </div>
 
-                        <div className="contact-text">
-                            <span>Số điện thoại</span>
-                            <span>{ user ? user.phone_number : '' }</span>
+                    <div className="infor-field">
+                        <span className='infor-title'>Số điện thoại</span>
+                        <div className="input-data">
+                            <Controller 
+                                name='phoneNumber'
+                                control={control}
+                                render={({ field }) => (
+                                    <input 
+                                        {...field}
+                                        type="text" 
+                                        placeholder='Nhập số điện thoại'
+                                    />
+                                )}
+                            />
                         </div>
                     </div>
 
-                    <div className="contact-action">
-                        <button>Thay đổi</button>
-                    </div>
-                </div>
-
-                <div className="contact-field">
-                    <div className="contact-content">
-                        <div className="contact-icon">
-                            <Mail />
+                    <div className="infor-field">
+                        <span className='infor-title'>Email</span>
+                        <div className="input-data">
+                            <Controller 
+                                name='email'
+                                control={control}
+                                rules={{ validate: validateEmail }}
+                                render={({ field }) => (
+                                    <input 
+                                        {...field}
+                                        type="text" 
+                                        placeholder='Nhập emnail'
+                                        onBlur={() => trigger("email")}
+                                    />
+                                )}
+                            />
                         </div>
 
-                        <div className="contact-text">
-                            <span>Email</span>
-                            <span>{ user ? user.email : '' }</span>
+                        {errors.email && <span className="error-message">{errors.email.message}</span>}
+
+                        <div></div>
+
+                        <div className='infor-action'>
+                            <button>Cập nhật</button>
                         </div>
                     </div>
 
-                    <div className="contact-action">
-                        <button type='submit'>Thay đổi</button>
+                    <div className="infor-field">
+                        <span className='infor-title'>Ngày Sinh</span>
+                        <div className="input-data">
+                            <Controller 
+                                name='day_of_birth'
+                                control={control}
+                                rules={{
+                                    validate: value => isValidBirthDate(value) || 'Ngày sinh không hợp lệ, hãy chọn lại ngày khác'
+                                }}
+                                render={({ field }) => (
+                                    <>
+                                        <DayOfBirthSelector 
+                                            {...field}
+                                        />
+                                    </>
+                                )}
+                            />
+                        </div>
+
+                        {errors.day_of_birth && <span className="error-message">{errors.day_of_birth.message}</span>}
+                        
+                    </div>
+
+                    <div className="infor-field">
+                        <span className='infor-title'>Giới tính</span>
+                        <div className="input-text">
+                            <Controller 
+                                name='gender'
+                                control={control}
+                                render={({ field }) => (
+                                    <GenderSelector 
+                                        {...field}
+                                    />
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="infor-field">
+                        <span></span>
+                        <div className="input-data">
+                            <div className="btn-submit">
+                                <button disabled={hasErrors}>Lưu Thay Đổi</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

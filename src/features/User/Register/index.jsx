@@ -5,10 +5,15 @@ import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import { API_URL } from '../../../constants/config';
 import _ from 'lodash';
-import EmailVerify from '../components/EmailVerify';
+import EmailVerify from '../../../components/EmailVerify';
 import Loading from '../../../components/Loading';
+import { validateEmail, validatePhoneNumber } from '../../../utils/fieldUtils';
+import { register } from '../../../store/slices/authSlice';
+import { useDispatch } from 'react-redux';
+import { AuthService } from '../../../services';
 
 const Register = () => {
+    const dispatch = useDispatch();
     const [isChecked, setIsChecked] = useState(false);
     const [showEmailVerify, setShowEmailVerify] = useState(false);
     const [user, setUser] = useState(null);
@@ -39,16 +44,6 @@ const Register = () => {
         return true; 
     };
 
-    const validatePhoneNumber = (value) => { 
-        const regex = /^[0-9]{3}$/; 
-        return regex.test(value) || "Số điện thoại không hợp lệ"; 
-    };
-
-    const validateEmail = (value) => { 
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
-        return regex.test(value);
-    }
-
     const validateUsername = async() => {
         const username = watch('username');
 
@@ -58,8 +53,8 @@ const Register = () => {
 
         if (username) {
             try {
-                const response = await axios.post(`${API_URL}/check-username`, {username});
-                if (!response.data.isAvailable) {
+                const { isAvailable } = await AuthService.checkUsername({ username });
+                if (!isAvailable) {
                     return `${username} không khả dụng.`;
                 }
 
@@ -88,14 +83,13 @@ const Register = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post(`${API_URL}/register`, registerForm, { withCredentials: true });
-            setUser(response.data.user);
-            console.log(response.data.user);
+            await dispatch(register(registerForm)).unwrap();
+            
             setShowEmailVerify(true);
         } catch (error) {
             console.log(error);
         } finally {
-            setLoading(true);
+            setLoading(false);
         }
     }
 
@@ -153,7 +147,7 @@ const Register = () => {
                                 render={({ field }) => (
                                     <input 
                                         {...field}
-                                        type="text"
+                                        type="password"
                                         required 
                                     />
                                 )}
@@ -176,7 +170,7 @@ const Register = () => {
                                 render={({ field }) => (
                                     <input 
                                         {...field}
-                                        type="text"
+                                        type="password"
                                         required 
                                         onBlur={() => trigger("confirmPassword")}
                                     />
@@ -316,8 +310,6 @@ const Register = () => {
                     <div className="btn">
                         <button type='submit'>Đăng Kí</button>
                     </div>
-
-                    <button onClick={() => setShowEmailVerify(true)}>Show</button>
                 </form>
             </div>
         </div>

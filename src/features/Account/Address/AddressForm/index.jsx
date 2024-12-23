@@ -1,206 +1,189 @@
 import React, { useEffect, useState } from 'react';
 import './styles.scss';
-import axios from 'axios';
 import Location from '../../../../components/Location';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import isNotEmptyObject from '../../../../utils/objectUtils';
-import { API_URL } from '../../../../constants/config';
+import { MESSAGE } from '../../../../constants/config';
+import { createAddress, fetchAddress, updateAddress } from '../../../../services/api/addressApi';
+import _ from 'lodash';
 
 const AddressForm = () => {
     const navigate = useNavigate();
     const [address, setAddress] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     
     const { id } = useParams();
 
-    useEffect(() => {
-        const loadAddress = async (id) => {
-            if (id) {
-                try {
-                    const response = await axios.get(`${API_URL}/get-address/${id}`, { withCredentials: true });
-        
-                    if (response.status === 201) {
-                        setAddress(response.data.address);
-                    } else {
-                        console.log('Error!');
-                    }
-                } catch (error) {
-                    console.log(error.response);
-                }
-            }
-        } 
-        
-        loadAddress(id);
-    }, [id]);
-
-    useEffect(() => {
-        setValue('customerName', address?.customer_name || '');
-        setValue('phoneNumber', address?.phone_number || '');
-        setValue('location', 
-            {
-                province: {
-                    id: address?.province_id || '',
-                    name: address?.province_name || ''
-                },
-                district: {
-                    id: address?.district_id || '',
-                    name: address?.district_name || ''
-                },
-                ward: {
-                    id: address?.ward_id || '',
-                    name: address?.ward_name || ''
-                }
-            },
-        );
-        setValue('addressDetail', address?.address_detail);
-    }, [address]);
-
     const { handleSubmit, control, formState: { errors }, setValue } = useForm({
         defaultValues: {
-            customerName: '',
+            name: '',
             phoneNumber: '',
-            location: {
-                province: {
-                    id: '',
-                    name: ''
-                },
-                district: {
-                    id: '',
-                    name: ''
-                },
-                ward: {
-                    id: '',
-                    name: ''
-                }
+            address: {
+                province: null,
+                district: null,
+                ward: null
             },
-            addressDetail: ''
+            detail: ''
         }
     });
 
+    useEffect(() => {
+        const loadAddress = async (addressId) => {
+            try {
+                setLoading(true);
+                const data = await fetchAddress(addressId);
+                setAddress(data.address);
+            } catch (error) {
+                setError(error.message);
+            } finally {
+                setLoading(false);
+            }
+        } 
+        
+        if (id) {
+            loadAddress(id);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        setValue('name', address?.name || '');
+        setValue('phoneNumber', address?.phoneNumber || '');
+        setValue('location', 
+            {
+                province: address?.province,
+                district: address?.district,
+                ward: address?.ward,
+            },
+        );
+        setValue('detail', address?.detail);
+    }, [address, setValue]);
+
     const onSubmit = async (data) => {
-        if (!isNotEmptyObject(data)) {
+        if (id && !address) {
+            alert(MESSAGE.ERROR.VALIDATION_ERROR);
             return;
         }
 
-        const { customerName, phoneNumber, location, addressDetail} = data;
+        const { name, phoneNumber, location, detail} = data;
 
-        const addressData = {
+        const { province, district, ward } = location;
+
+        const addressData = _.mapKeys({
             id: address?.id,
-            customer_name: customerName,
-            phone_number: phoneNumber,
-            province_id: location.province.id,
-            district_id: location.district.id,
-            ward_id: location.ward.id,
-            province_name: location.province.name,
-            district_name: location.district.name,
-            ward_name: location.ward.name,
-            address_detail: addressDetail
-        }
-
-        const apiRoute = addressData.id ? 'update-address' : 'create-address';
-        const method = addressData.id ? 'put' : 'post';
+            name,
+            phoneNumber,
+            province,
+            district,
+            ward,
+            detail,
+            }, (value, key) => _.snakeCase(key)
+        );
         
         try {
-            const response = await axios({
-                method: method,
-                url: `${API_URL}/${apiRoute}`,
-                data: addressData,
-                withCredentials: true
-            });
-
-            console.log(response);
-            if (response.status === 200) {
-                navigate('/account/address')
+            const isUpdated = id 
+                ? await updateAddress(addressData) 
+                : await createAddress(addressData);
+            if (isUpdated) {
+                alert(MESSAGE.SUCCESS.ADDRESS_UPDATED);
+                navigate('/account/address');
+            } else {
+                alert(MESSAGE.ERROR.ADDRESS_UPDATE_ERROR);
             }
         } catch (error) {
-            console.log(error);
+            setError(error.message);
+            alert(MESSAGE.ERROR.GENERAL_ERROR);
         }
     }
 
     return (
         <div className='address-edit'>
             <form className="edit-form" onSubmit={handleSubmit(onSubmit)}>
-                <div className="edit-field">
-                    <div className="edit-title">
-                        <span>Họ & Tên</span>
-                    </div>
+                <div className="address-title">Địa chỉ</div>
 
-                    <Controller 
-                        name='customerName'
-                        control={control}
-                        render={({ field }) => (
-                            <div className="edit-input">
-                                <input 
-                                    {...field}
-                                    required
-                                    placeholder='Nhập họ và tên'
-                                    type="text"      
-                                />
-                            </div>
-                        )}
-                    />
-                </div>
+                <div className="edit-content">
+                    <div className="edit-field">
+                        <div className="edit-title">
+                            <span>Họ & Tên</span>
+                        </div>
 
-                <div className="edit-field">
-                    <div className="edit-title">
-                        <span>Điện thoại</span>
-                    </div>
-
-                    <Controller 
-                        control={control}
-                        name='phoneNumber'
-                        render={({ field }) => (
-                            <div className="edit-input">
-                                <input 
-                                    {...field}
-                                    required
-                                    placeholder='Nhập số điện thoại'
-                                    type="text" 
-                                />
-                            </div>
-                        )}
-                    />
-                </div>
-
-                <Controller 
-                    name='location'
-                    control={control}
-                    render={({ field }) => (
-                        <Location 
-                            {...field}
-                        />
-                    )}
-                />
-
-                <div className="edit-field">
-                    <div className="edit-title">
-                        <span>Địa chỉ</span>
-                    </div>
-
-                    <div className="edit-input">
                         <Controller 
-                            name='addressDetail'
+                            name='name'
                             control={control}
                             render={({ field }) => (
-                                <textarea
-                                    {...field}  
-                                    name="" 
-                                    id="" 
-                                    required
-                                    placeholder='Nhập địa chỉ'
-                                />
+                                <div className="edit-input">
+                                    <input 
+                                        {...field}
+                                        required
+                                        placeholder='Nhập họ và tên'
+                                        type="text"      
+                                    />
+                                </div>
                             )}
                         />
                     </div>
-                </div>
 
-                <div className="edit-field">
-                    <div className="edit-title">
-                        
+                    <div className="edit-field">
+                        <div className="edit-title">
+                            <span>Điện thoại</span>
+                        </div>
+
+                        <Controller 
+                            control={control}
+                            name='phoneNumber'
+                            render={({ field }) => (
+                                <div className="edit-input">
+                                    <input 
+                                        {...field}
+                                        required
+                                        placeholder='Nhập số điện thoại'
+                                        type="text" 
+                                    />
+                                </div>
+                            )}
+                        />
                     </div>
 
-                    <div className="edit-input">
-                        <button type='submit'>Cập nhật</button>
+                    <Controller 
+                        name='location'
+                        control={control}
+                        render={({ field }) => (
+                            <Location 
+                                {...field}
+                            />
+                        )}
+                    />
+
+                    <div className="edit-field">
+                        <div className="edit-title">
+                            <span>Địa chỉ</span>
+                        </div>
+
+                        <div className="edit-input">
+                            <Controller 
+                                name='detail'
+                                control={control}
+                                render={({ field }) => (
+                                    <textarea
+                                        {...field}  
+                                        name="" 
+                                        id="" 
+                                        required
+                                        placeholder='Nhập địa chỉ'
+                                    />
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="edit-field">
+                        <div className="edit-title">
+                            
+                        </div>
+
+                        <div className="edit-input">
+                            <button type='submit'>Cập nhật</button>
+                        </div>
                     </div>
                 </div>
             </form>

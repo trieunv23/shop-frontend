@@ -5,6 +5,7 @@ import './styles.scss';
 import Title from '../components/Title';
 import axios from 'axios';
 import { API_URL } from '../../../../constants/config';
+import { fetchUsers } from '../../../../services/api/admin/userApi';
 
 
 const Customers = () => {
@@ -14,10 +15,9 @@ const Customers = () => {
     useEffect(() => {
       const loadUsers = async() => {
         try {
-          const response = await axios.get(`${API_URL}/get-users`);
-          setUsers(response.data);
-          setFilteredUsers(response.data);
-          console.log(response);
+          const { users } = await fetchUsers();
+          setUsers(users);
+          setFilteredUsers(users);
         } catch (error) {
           console.log(error);
         }
@@ -40,8 +40,8 @@ const Customers = () => {
     const columns = [
       {
           title: 'Mã khách hàng',
-          dataIndex: 'userCode',
-          key: 'userCode',
+          dataIndex: 'code',
+          key: 'code',
       },
       {
         title: 'Họ và Tên',
@@ -81,6 +81,7 @@ const Customers = () => {
               columns={columns} 
               dataSource={filteredUsers} 
               className='customer-list'
+              rowKey="code"
             />
         </div>
     );

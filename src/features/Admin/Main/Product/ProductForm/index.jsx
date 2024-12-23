@@ -10,6 +10,10 @@ import { API_URL } from '../../../../../constants/config';
 
 import { isValidateImageFile } from '../../../../../utils/fileUpload';
 import { useNavigate } from 'react-router-dom';
+import { fetchCategories } from '../../../../../services/api/admin/categoryApi';
+import { fetchSizes } from '../../../../../services/api/admin/sizeApi';
+import { fetchColors } from '../../../../../services/api/admin/colorApi';
+import { createProduct } from '../../../../../services/api/admin/productApi';
 
 const ProductForm = () => {
     const navigate = useNavigate();
@@ -54,22 +58,17 @@ const ProductForm = () => {
         try {
             const formData = new FormData();
 
-            formData.append('name', data.name);
-            formData.append('price', data.price);
-            formData.append('weight', data.weight);
-            formData.append('description', data.description);
+            ['name', 'price', 'weight', 'description'].forEach((key) => formData.append(key, data[key]));
 
-            data.categories.forEach((category) => formData.append('categories[]', Number(category)));
-            data.colors.forEach((color) => formData.append('colors[]', color ));
-            data.sizes.forEach((size) => formData.append('sizes[]', Number(size)));
+            ['categories', 'colors', 'sizes', 'images'].forEach((key) => {
+                data[key].forEach((item) => 
+                    formData.append(`${key}[]`, key === 'categories' || key === 'sizes' ? Number(item) : item)
+                );
+            });
+
             data.images.forEach((image) => formData.append('images[]', image));
 
-            await axios.post(`${API_URL}/create-product`, formData, { 
-                headers: { 
-                    'Content-Type': 'multipart/form-data' 
-                },
-                withCredentials: true 
-            });
+            await createProduct(formData);
 
             alert('Thêm sản phẩm thành công.');
 
@@ -82,10 +81,10 @@ const ProductForm = () => {
     useEffect(() => {
         const loadCategories = async () => {
             try {
-                const response = await axios.get(`${API_URL}/get-categories`);
-                setCategories(response.data.categories);
+                const { categories } = await fetchCategories();
+                setCategories(categories);
             } catch (error) {
-                console.log(error.response);
+                console.log(error);
             }
         } 
 
@@ -95,10 +94,10 @@ const ProductForm = () => {
     useEffect(() => {
         const loadSizes = async () => {
             try {
-                const response = await axios.get(`${API_URL}/get-sizes`);
-                setSizes(response.data.sizes);
+                const { sizes } = await fetchSizes();
+                setSizes(sizes);
             } catch (error) {
-                console.log(error.response);
+                console.log(error);
             }
         } 
 
@@ -108,10 +107,10 @@ const ProductForm = () => {
     useEffect(() => {
         const loadColors = async () => {
             try {
-                const response = await axios.get(`${API_URL}/get-colors`);
-                setColors(response.data.colors);
+                const { colors } = await fetchColors();
+                setColors(colors);
             } catch (error) {
-                console.log(error.response);
+                console.log(error);
             }
         } 
 

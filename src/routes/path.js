@@ -1,5 +1,3 @@
-import Purchases from "../features/Order/Orders";
-
 export const path = {
     user: '/user',
         login: 'login',
@@ -7,6 +5,7 @@ export const path = {
     main: '/',
     account: '/account',
         profile: 'profile',
+        email: 'email',
         address: 'address',
             addresses: '',
             addressCreate: 'create',
@@ -16,6 +15,7 @@ export const path = {
         adMain: '',
             adCustomers: 'customer',
             adDashboard: 'dashboard',
+                adBanner: 'banner',
             adOrder: 'order',
                 adOrders: '',
                 adOrderDetail: 'detail/:id',

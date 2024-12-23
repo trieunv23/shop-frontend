@@ -1,24 +1,38 @@
-.location-field {
+.location-wr {
     display: flex;
     flex-direction: column;
 
-    .edit-field {
+    .location-field {
         width: 100%;
         display: flex;
         align-items: center;
-        margin-bottom: 30px;
+        padding: 20px 0;
 
-        .edit-title {
-            width: 150px;
+        .location-title {
+            width: 175px;
+            min-width: 175px;
             font-size: 14px;
         }
 
-        .edit-input {
-            width: calc(100% - 150px);
+        .location-input {
+            width: 350px;
+            display: flex;
             
-            input, select {
+            select {
                 width: 100%;
-                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            flex-direction: column;
+
+            .location-title {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .location-input {
+                width: 100%;
             }
         }
     }

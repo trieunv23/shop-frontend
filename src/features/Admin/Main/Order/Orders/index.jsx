@@ -2,26 +2,44 @@ import React, { useEffect, useState } from 'react';
 import './styles.scss';
 import Title from '../../components/Title';
 import { Button, Table } from 'antd';
-import axios from 'axios';
-import { API_URL } from '../../../../../constants/config';
 import { useNavigate } from 'react-router-dom';
+import { fetchOrders } from '../../../../../services/api/admin/orderApi';
+
+const getStatus = (status) => {
+    switch (status) {
+        case 'pending':
+            return 'Chờ Xác Nhận';
+        case 'confirmed':
+            return 'Đã Xác Nhận';
+        case 'processed':
+            return 'Đang Xử Lí';
+        case 'shipped':
+            return 'Chờ Giao Hàng';
+        case 'delivered':
+            return 'Giao Hàng Thành Công';
+        default:
+            return '';
+    }
+};
 
 const Orders = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredOrders, setFilteredOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const loadOrders = async() => {
+            setLoading(true);
             try {
-                const response = await axios.get(`${API_URL}/get-orders-admin`);
-                setOrders(response.data.orders);
-                setFilteredOrders(response.data.orders);
+                const { orders } = await fetchOrders();
+                setOrders(orders);
+                setFilteredOrders(orders);
             } catch (error) {
                 console.log(error);
             } finally {
-                // setLoading(false);
+                setLoading(false);
             }
         }
 
@@ -48,7 +66,7 @@ const Orders = () => {
     const columns = [
         {
             title: 'Mã đơn hàng',
-            dataIndex: 'orderCode',
+            dataIndex: 'code',
             key: 'id',
         },
 
@@ -67,8 +85,11 @@ const Orders = () => {
         },
         {
             title: 'Trạng thái',
-            dataIndex: 'orderStatus',
+            dataIndex: 'status',
             key: 'status',
+            render: (status) => (
+                <span>{getStatus(status)}</span>
+            )
         },
         {
             title: 'Ngày tạo',

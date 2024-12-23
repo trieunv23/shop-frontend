@@ -30,9 +30,8 @@ const Login = () => {
                 withCredentials: true
             });
 
-            if (response.status === 201) {
-               navigate('/');
-            }
+            console.log(response.data);
+            navigate('/');
 
         } catch (error) {
             console.log(error);

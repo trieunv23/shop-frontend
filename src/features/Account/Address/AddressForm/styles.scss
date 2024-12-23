@@ -1,34 +1,62 @@
 .address-edit {
 
     .edit-form {
-        width: 70%;
         display: flex;
         flex-direction: column;
 
-        .edit-field {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            margin-bottom: 30px;
+        .address-title {
+            margin-bottom: 15px;
+        }
 
-            .edit-title {
-                width: 150px;
-                font-size: 14px;
-            }
+        .edit-content {
+            border-top: solid 1px #868686;
+            padding-top: 20px;
 
-            .edit-input {
-                width: calc(100% - 150px);
-                
-                input, select, textarea {
-                    width: 100%;
-                    padding: 8px 10px;
-                    border: solid 1px var(--color-border-input);
-                    outline: none;
+            .edit-field {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                padding: 20px 0;
+    
+                .edit-title {
+                    width: 175px;
+                    font-size: 14px;
+                }
+    
+                .edit-input {
+                    width: 350px;
+                    display: flex;
+                    justify-content: center;
+                    
+                    input, textarea {
+                        width: 100%;
+                        background: #f9f9f9;
+                    }
+
+                    button {
+                        width: 135px;
+                        border: none;
+                        background: none; 
+                        background: black;
+                        font-weight: 500;
+                        color: white;
+                        cursor: pointer;
+                        border-radius: 4px;
+                      }
                 }
 
-                button {
-                    width: 50%;
-                    padding: 8px 10px;
+                @media (max-width: 1024px) {
+                    flex-direction: column;
+
+                    .edit-title {
+                        width: 100%;
+                        align-items: normal;
+                        margin-bottom: 10px;
+                    }
+
+                    .edit-input {
+                        width: 100%;
+                    }
                 }
             }
         }

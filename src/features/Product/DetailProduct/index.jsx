@@ -14,6 +14,8 @@ import isNotEmptyObject from '../../../utils/objectUtils';
 import { API_URL } from '../../../constants/config';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../../Checkout/Cart/slice';
+import { fetchProduct } from '../../../services/api/productApi';
+import { addToCart } from '../../../services/api/cartApi';
 
 const DetailProduct = (props) => {
     const dispatch = useDispatch();
@@ -48,10 +50,9 @@ const DetailProduct = (props) => {
         try {
             const snakeCaseData =  _.mapKeys(data, (value, key) => _.snakeCase(key));
 
-            const response = await axios.post(`${API_URL}/add-to-cart`, snakeCaseData, { withCredentials: true });
+            await addToCart(snakeCaseData);
     
             alert('Sản phẩm đã được thêm vào giỏ hàng');
-            dispatch(addItem());
         } catch (error) {
             console.error(error);
             alert('Không thể kết nối với server');
@@ -70,8 +71,9 @@ const DetailProduct = (props) => {
         const loadProduct = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${API_URL}/get-product/${id}`);
-                setProduct(response.data);
+                const { product } = await fetchProduct(id);
+                console.log(product);
+                setProduct(product);
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -126,9 +128,9 @@ const DetailProduct = (props) => {
                             <div className="sticky-area">
                                 <div className="product-images">
                                     <div className="swiper-wrapper">
-                                        {product.product_images.map((image, index) => (
+                                        {product.images.map((image, index) => (
                                             <div key={index} className="swipper-slide">
-                                                <img src={`${API_URL}/storage/${image.img_url}`} alt="" />
+                                                <img src={`${API_URL}/storage/${image.path}`} alt="" />
                                             </div>
                                         ))}
                                     </div>
@@ -137,12 +139,12 @@ const DetailProduct = (props) => {
                         </div>
 
                         <div className="detail-thumnail">
-                            {product.product_images.map((image, index) => (
+                            {product.images.map((image, index) => (
                                 <div 
                                     key={index}
                                     className="product-image"
                                 >
-                                    <img src={`${API_URL}/storage/${image.img_url}`} alt="" />
+                                    <img src={`${API_URL}/storage/${image.path}`} alt="" />
                                 </div>
                             ))}
                         </div>

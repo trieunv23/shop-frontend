@@ -5,13 +5,12 @@ import { Popover } from "antd";
 import QuantitySelector from '../../../components/QuantitySelector';
 import OptionSelector from '../../../components/OptionSelector';
 import Trash from '../../../components/icons/Trash';
-import Voucher from '../../../components/Voucher';
 import { API_URL } from '../../../constants/config';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import _ from 'lodash';
 import { useDispatch } from 'react-redux';
 import { removeItem } from './slice';
+import { deleteCartProduct, fetchCart, updateCartProduct } from '../../../services/api/cartApi';
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -25,13 +24,10 @@ const Cart = () => {
     useEffect(() => {
         const loadCart = async() => {
             try {
-                const response = await axios.get(`${API_URL}/get-cart`, { withCredentials: true });
-                if (response.status === 200) {
-                    console.log(response.data);
-                    setCart(response.data.cart);
-                    setCartProducts(response.data.products);
-                    setTotalPrice(response.data.totalPrice);
-                }
+                const { cart, products, totalPrice } = await fetchCart();
+                setCart(cart);
+                setCartProducts(products);
+                setTotalPrice(totalPrice);
             } catch (error) {
                 console.log(error.response);
             }
@@ -44,18 +40,11 @@ const Cart = () => {
         const cartProduct = cartProducts.find(p => p.id === cartProductId);
         if (cartProduct && cartProduct.quantity !== newTotal) {
             try {
-                await axios.put(
-                    `${API_URL}/update-cart-product-quantity`, 
-                    { 
-                        cart_product_id: cartProductId,
-                        quantity: newTotal 
-                    }, 
-                    { withCredentials: true }
-                );
-    
+                await updateCartProduct(cartProductId, { quantity: newTotal });
+                
                 const updatedProducts = cartProducts.map(cartProduct => 
                     cartProduct.id === cartProductId 
-                    ? {...cartProduct, quantity: newTotal, totalPrice: cartProduct.product.price * newTotal }
+                    ? {...cartProduct, quantity: newTotal, totalPrice: cartProduct.price * newTotal }
                     : cartProduct
                 );
     
@@ -71,11 +60,7 @@ const Cart = () => {
 
     const handleDeleteCartProduct = async(cartProductId) => {
         try {
-            await axios.post(
-                `${API_URL}/delete-cart-product`, {
-                    cart_product_id: cartProductId
-                }, { withCredentials: true }
-            );
+            await deleteCartProduct(cartProductId);
 
             const updatedProducts = cartProducts.filter(cartProduct => cartProduct.id !== cartProductId);
             setCartProducts(updatedProducts);
@@ -83,7 +68,7 @@ const Cart = () => {
             const newTotalPrice = updatedProducts.reduce((sum, cartProduct) => sum + cartProduct.totalPrice, 0);
             setTotalPrice(newTotalPrice);
 
-            dispatch(removeItem());
+            // dispatch(removeItem());
         } catch (error) {
             console.log(error);
         }
@@ -147,12 +132,12 @@ const Cart = () => {
                                     <div className="p-infor">
                                         <div className="thumb">
                                             <a href={`/product/detail/${cartProduct.id}`}>
-                                                <img src={`${API_URL}/storage/${cartProduct.product.image}`} alt="" />
+                                                <img src={`${API_URL}/storage/${cartProduct.imgPath}`} alt="" />
                                             </a>
                                         </div>
 
                                         <div className="infor">
-                                            <span className='product-name'>{cartProduct.product.name}</span>
+                                            <span className='product-name'>{cartProduct.name}</span>
 
                                             <div className="product-type">
                                                 <Popover content={content} trigger="click">
@@ -165,7 +150,7 @@ const Cart = () => {
                                     </div>
 
                                     <div className="price">
-                                        <span className='product-price'>{cartProduct.product.price}<span className='unit'>đ</span></span>
+                                        <span className='product-price'>{cartProduct.price}<span className='unit'>đ</span></span>
                                     </div>
 
                                     <div className="quantity">

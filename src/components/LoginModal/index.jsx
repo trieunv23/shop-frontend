@@ -1,20 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useModal } from '../../context/ModalContext';
 import { Controller, useForm } from "react-hook-form";
 import './styles.scss';
 import { Input } from 'antd';
 import Password from 'antd/es/input/Password';
 import Close from '../icons/Close';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../../constants/config';
-import { useDispatch } from 'react-redux';
-
-import { setAuthenticated } from '../../features/User/slice';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/slices/authSlice';
+import { MESSAGE } from '../../constants/config';
 
 const LoginModal = () => {
     const modalName = 'loginModal';
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -22,6 +19,7 @@ const LoginModal = () => {
     const [isFocusUsername, setIsFocusUsername] = useState(false);
     const [isFocusPassword, setIsFocusPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const error = useSelector(state => state.auth.error);
 
     const { handleSubmit, formState: { errors }, control } = useForm({
         defaultValues: {
@@ -40,43 +38,21 @@ const LoginModal = () => {
         closeModal(modalName);
     }
 
-    const handlelogin = async (data) => {
-        const {username, password} = data;
-
-        setIsLoading(true);
-        try {
-            const response = await axios.post(`${API_URL}/login`, {
-                username,
-                password
-            }, {
-                withCredentials: true
-            });
-
-            if (response.status === 201) {
-                setAuthenticated(true);
-                closeModal(modalName);
-                navigate(0);
-            }
-
-        } catch (error) {
-            console.log(error);
-
-            if (error.response && error.response.status === 401) {
-                alert('Tên đăng nhập hoặc mật khẩu không đúng.');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    const onSubmit = (data) => {
+    const onSubmit = async(data) => {
         const { username, password } = data;
         if (username && password) {
-            handlelogin(data);
-        } else {
-            
+            try {
+                await dispatch(login(data)).unwrap();
+                handleClosePopup();
+            } catch (error) {
+                if (error.status === 401) {
+                    alert(MESSAGE.ERROR.INVALID_CREDENTIALS);
+                } else {
+                    alert(MESSAGE.ERROR.NETWORK_ERROR);
+                }
+            }
         }
-    }
+    };
 
     return (
         <div className={`modal ${isOpen(modalName) ? 'show' : ''}`} onClick={handleOutsideClick}>
@@ -146,7 +122,7 @@ const LoginModal = () => {
                         </button>
 
                         <div className="util-menu">
-                            <a href="">Đăng kí</a>
+                            <Link to={'/user/register'} onClick={handleClosePopup}>Đăng kí</Link>
                             <a href="">Quên mật khẩu</a>  
                         </div>
                     </div>

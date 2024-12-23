@@ -31,7 +31,6 @@
                 span {
                     line-height: 22px;
                     margin-bottom: 2px;
-                    font-size: 13px;
                 }
 
                 .customer-infor {
@@ -171,8 +170,8 @@
                     display: flex;
                     margin-top: 10px;
 
-                    button {
-                        padding: 8px 40px;
+                    a {
+                        padding: 12px 20px;
                         border: solid 1px rgb(196, 196, 207);
                         outline: none;
                         // border-radius: 4px;

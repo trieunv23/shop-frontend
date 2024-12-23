@@ -3,9 +3,9 @@ import './styles.scss';
 import Product from '../../../components/Product';
 import { useParams } from 'react-router-dom';
 import { API_URL } from '../../../constants/config';
-import axios from 'axios';
+import { fetchProducts } from '../../../services/api/productApi';
 
-const Products = (props) => {
+const Products = () => {
     const { filter } = useParams();
 
     const [products, setProducts] = useState([]);
@@ -15,10 +15,10 @@ const Products = (props) => {
     useEffect(() => {
         const loadProducts = async() => {
             try {
-                const response = await axios.get(`${API_URL}/get-products/${filter}`);
-                setProducts(response.data.products);
-                setCategory(response.data.category);
-                console.log(response.data);
+                const { products, category } = await fetchProducts(filter);
+                setProducts(products);
+                setCategory(category);
+                console.log(products);
             } catch (error) {
                 console.log(error);
             } finally {
@@ -61,7 +61,7 @@ const Products = (props) => {
                         <Product 
                             key={product.id}
                             id={product.id}
-                            imageUrl={`${API_URL}/storage/${product.first_product_image.img_url}`}
+                            imageUrl={`${API_URL}/storage/${product.image?.path}`}
                             name={product.name}
                             price={product.price}
                             status={product.status}

@@ -11,11 +11,7 @@ import Header from '../../components/Header';
 import { useAccountStatus } from '../../context/AccountStatusContext';
 
 const Account = () => {
-    const location = useLocation();
-
     const { optionSelected } = useAccountStatus();
-
-    console.log(location);
 
     return (
         <div>
@@ -24,40 +20,51 @@ const Account = () => {
                     <Header />
                     <div className="account-wr">
                         <div className="account-contents">
-                            <div className="account-main wide">
+                            <div className="account-main">
                                 <div className="account-menu">
                                     <div className="menu-list">
-                                        <Link 
-                                            className={`menu-item ${optionSelected === 'profile' ? 'active' : ''}`}
-                                            to={'profile'}
-                                        >
-                                            <Persional />
-                                            <span className='item-name'>Thông tin tài khoản</span>
-                                        </Link>
+                                        <div className="menu-box">
+                                            <span className='menu-title'>Tài khoản</span>
 
-                                        <Link 
-                                            className={`menu-item ${optionSelected === 'address' ? 'active' : ''}`}
-                                            to={'address'}
-                                        >
-                                            <Location />
-                                            <span className='item-name'>Địa chỉ</span>
-                                        </Link>
+                                            <ul className="menu-content">
+                                                <li>
+                                                    <Link 
+                                                        className={`menu-item ${optionSelected === 'profile' ? 'active' : ''}`}
+                                                        to={'profile'}
+                                                    >
+                                                        <span className='item-name'>Thông tin tài khoản</span>
+                                                    </Link>
+                                                </li>
 
-                                        <Link 
-                                            className={`menu-item ${optionSelected === 'order' ? 'active' : ''}`}
-                                            to={'/order'}
-                                        >
-                                            <Order />
-                                            <span className='item-name'>Đơn mua</span>
-                                        </Link>
+                                                <li>
+                                                    <Link 
+                                                        className={`menu-item ${optionSelected === 'address' ? 'active' : ''}`}
+                                                        to={'address'}
+                                                    >
+                                                        <span className='item-name'>Địa chỉ</span>
+                                                    </Link>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="menu-box">
+                                            <span className='menu-title'>Mua sắm</span>
+
+                                            <ul className="menu-content">
+                                                <li>
+                                                    <Link 
+                                                        className={`menu-item ${optionSelected === 'order' ? 'active' : ''}`}
+                                                        to={'/order'}
+                                                    >
+                                                        <span className='item-name'>Đơn mua</span>
+                                                    </Link>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="account-detail">
-                                    <div className="detail-title">
-                                        Thông tin tài khoản
-                                    </div>
-
                                     <Outlet />
                                 </div>
                             </div>

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './styles.scss';
 import Title from '../../components/Title';
 import { Button, Table, Tag } from 'antd';
-import { API_URL } from '../../../../../constants/config';
-import axios from 'axios';
+import { fetchProducts } from '../../../../../services/api/admin/productApi';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -12,10 +11,9 @@ const Products = () => {
     useEffect(() => {
         const loadProducts = async() => {
           try {
-            const response = await axios.get(`${API_URL}/get-all-products`);
-            setProducts(response.data);
-            setFilteredProducts(response.data);
-            console.log(response);
+            const { products } = await fetchProducts();
+            setProducts(products);
+            setFilteredProducts(products);
           } catch (error) {
             console.log(error);
           }
@@ -47,8 +45,8 @@ const Products = () => {
     const columns = [
     {
         title: 'Mã sản phẩm',
-        dataIndex: 'productCode',
-        key: 'productCode',
+        dataIndex: 'code',
+        key: 'code',
     },
     {
         title: 'Tên sản phẩm',

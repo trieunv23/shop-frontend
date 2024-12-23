@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import './styles.scss';
-import { Route, Routes } from 'react-router-dom';
-import Order from '../OrderDetail';
-import Transfer from '../../../components/icons/Transfer';
+
 import axios from 'axios';
 import { API_URL } from '../../../constants/config';
-import { generateStatus } from '../../../utils/orderUtils';
 import { formatCurrency } from '../../../utils/priceUtils';
+import { getOrderStatus } from '../../../utils/orderUtils';
+import { fetchOrders } from '../../../services/api/orderApi';
 
 const Purchases = () => {
     const [orders, setOrders] = useState([]);
@@ -15,9 +13,9 @@ const Purchases = () => {
     useEffect(() => {
         const loadOrders = async() => {
             try {
-                const response = await axios.get(`${API_URL}/get-orders`, { withCredentials: true });
-                setOrders(response.data.orders);
-                console.log(response.data.orders);
+                const { orders } = await fetchOrders();
+                setOrders(orders);
+                console.log(orders);
             } catch (error) {
                 console.log(error);
             }
@@ -25,6 +23,25 @@ const Purchases = () => {
 
         loadOrders();
     }, []);
+
+    const handleConfirmedReceiptOrder = async(orderId) => {
+        try { 
+            const response = await axios.post(`${API_URL}/confirmed_receipt`, { 
+                order_id: orderId 
+            }); 
+            alert(response.data.message); 
+            
+            const updatedOrders = orders.map(order => {
+                if (order.id === orderId) {
+                    order.orderSchedule.status = 'confirmed_receipt'
+                }
+            });
+
+            setOrders(updatedOrders);
+        } catch (error) { 
+            console.error('Failed to complete shipping:', error); 
+        }
+    }
 
     return (
         <div className='purchase-container'>
@@ -59,19 +76,19 @@ const Purchases = () => {
                                 <div key={index} className="purchase-item">
                                     <div className="purchase-status">
                                         <div className="order-code">
-                                            <span>Mã đơn hàng: {order.orderCode}</span>
+                                            <span>Mã đơn hàng: {order.code}</span>
                                         </div>
                                         <div className="status-content">    
                                             <div className="status-icon">
                                                 <img src="/images/delivery.png" alt="" />    
                                             </div>
                                             <span>
-                                                { generateStatus(order.orderStatus, order.orderSchedule.status) }
+                                                { getOrderStatus(order.status) }
                                             </span>
                                         </div>
                                     </div>
 
-                                    <a href={`order/detail/${order.orderId}`} className="purchase-products">
+                                    <a href={`order/detail/${order.id}`} className="purchase-products">
                                         {order.products.map((product, index) => (
                                             <div key={index} className="product-item">
                                                 <div className="product-infor">
@@ -80,7 +97,7 @@ const Purchases = () => {
                                                     </div>
 
                                                     <div className="product-contents">
-                                                        <span className='product-name'>{product.productName}</span>
+                                                        <span className='product-name'>{product.name}</span>
                                                         <span className='product-classify'>Phân loại: {}</span>
                                                         <span className='product-quantity'>x{product.quantity}</span>
                                                     </div>
@@ -110,8 +127,13 @@ const Purchases = () => {
                                         </div>
 
                                         <div className="purchase-btns">
-                                            <button>Đã Nhận Hàng</button>
-                                            <button>Hủy</button>
+                                            <button 
+                                                disabled={order.status === 'confirmed_receipt'}
+                                                onClick={() => handleConfirmedReceiptOrder(order.id)}
+                                            >Đã Nhận Hàng</button>
+                                            <button
+                                                disabled={!['pending', 'confirmed'].includes(order.status)}
+                                            >Hủy</button>
                                         </div>
                                     </div>
                                 </div>

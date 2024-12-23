@@ -1,62 +1,56 @@
 import React, { forwardRef, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import './styles.scss';
 
 const GenderSelector = forwardRef(({ onChange, value }, ref) => {
-    const [gender, setGender] = useState(null); 
-
-    useEffect(()=> {
-        if (value === 'male') setGender(0);
-        else if (value === 'female') setGender(1);
-        else if (value === 'other') setGender(2);
-    }, [value]);
+    const [gender, setGender] = useState(null);
 
     useEffect(() => {
-        if (onChange) {
-            onChange(gender === 0 ? 'male' : gender === 1 ? 'female' : 'other');
+        setGender(value);
+    }, [value]);
+
+    const handleGenderChange = (selectedGender) => { 
+        setGender(selectedGender); 
+
+        if (onChange) { 
+            onChange(selectedGender); 
         }
-    }, [gender, onChange]);
+    };
 
     return (
         <div ref={ref} className='gender-selector'>
             <input 
                 type="checkbox" 
-                name="" 
                 id="sex_0" 
-                value={0} 
-                checked={gender === 0} 
-                onChange={(e) => setGender(Number(e.target.value))} 
+                checked={gender === 'male'} 
+                onChange={() => handleGenderChange('male')} 
                 style={{
-                    backgroundImage: gender === 0 && 'url(/images/bg_checkbox_checked.png)'
+                    backgroundImage: gender === 'male' && 'url(/images/bg_checkbox_checked.png)'
                 }}
-            />
-            <label htmlFor="">Nam</label>
+            />  
+            <label htmlFor="sex_0">Nam</label>
 
             <input 
                 type="checkbox" 
-                name="" 
                 id="sex_1" 
-                value={1} 
-                checked={gender === 1} 
-                onChange={(e) => setGender(Number(e.target.value))} 
+                checked={gender === 'female'} 
+                onChange={() => handleGenderChange('female')} 
                 style={{
-                    backgroundImage: gender === 1 && 'url(/images/bg_checkbox_checked.png)'
+                    backgroundImage: gender === 'female' && 'url(/images/bg_checkbox_checked.png)'
                 }}
             />
-            <label htmlFor="">Nữ</label>
+            <label htmlFor="sex_1">Nữ</label>
 
             <input 
                 type="checkbox" 
                 name="" 
                 id="sex_2" 
-                value={2} 
-                checked={gender === 2} 
-                onChange={(e) => setGender(Number(e.target.value))} 
+                checked={gender === 'other'} 
+                onChange={() => handleGenderChange('other')} 
                 style={{
-                    backgroundImage: gender === 2 && 'url(/images/bg_checkbox_checked.png)'
+                    backgroundImage: gender === 'other' && 'url(/images/bg_checkbox_checked.png)'
                 }}
             />
-            <label htmlFor="">Khác</label>
+            <label htmlFor="sex_2">Khác</label>
         </div>
     );
 });

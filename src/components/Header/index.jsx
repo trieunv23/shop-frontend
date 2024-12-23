@@ -11,7 +11,7 @@ import { useModal } from '../../context/ModalContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../constants/config';
-import { setAuthenticated } from '../../features/User/slice';
+import { setAuthenticated } from '../../store/slices/authSlice';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -73,19 +73,19 @@ const Header = () => {
                     <div className="category">
                         <ul className="category-list">
                             <li className='category-item'>
-                                <a href="/product/all">Sản phẩm</a>
+                                <a href="/product/all">Tất Cả</a>
                             </li>
 
                             <li className='category-item'>
-                                <a href="new">Hàng mới</a>
+                                <a href="/product/new">Mới</a>
+                            </li>
+
+                            <li className='category-item'>
+                                <a href="/product/trousers">Quần</a>
                             </li>
 
                             <li className='category-item'>
                                 <a href="/product/shirt">Áo nam</a>
-                            </li>
-
-                            <li className='category-item'>
-                                <a href="/product/all">Áo nam</a>
                             </li>
                         </ul>
                     </div>
@@ -115,7 +115,7 @@ const Header = () => {
                                     </ul>
                                     <ul>
                                         <li>
-                                            <a href={authenticated ? '/purchase' : '/user/login'} onClick={handleClickAccount} >Đơn mua</a>
+                                            <a href={authenticated ? '/order' : '/user/login'} onClick={handleClickAccount} >Đơn mua</a>
                                         </li>
                                     </ul>
                                     { authenticated && 

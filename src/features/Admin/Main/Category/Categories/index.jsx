@@ -3,6 +3,7 @@ import Title from '../../components/Title';
 import { Table } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../../../../constants/config';
+import { fetchCategories } from '../../../../../services/api/admin/categoryApi';
 
 const Categories = ()=> {
     const [categories, setCategories] = useState([]);
@@ -10,9 +11,9 @@ const Categories = ()=> {
     useEffect(() => {
         const loadCategories = async () => {
             try {
-                const response = await axios.get(`${API_URL}/get-categories-admin`, {}, { withCredentials: true });
-                setCategories(response.data.categories);
-                console.log(response.data.categories);
+                const { categories } = await fetchCategories();
+                setCategories(categories);
+                console.log(categories);
             } catch (error) {
                 console.log(error);
             }

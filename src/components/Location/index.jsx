@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useState } from 'react';
-import axios from 'axios';
 import './styles.scss';
+
+import { fetchProvinces, fetchDistricts, fetchWards } from '../../services/api/addressApi';
 
 const Location = forwardRef(({ value, onChange }, ref) => {
     const [provinces, setProvinces] = useState([]);
@@ -10,37 +11,31 @@ const Location = forwardRef(({ value, onChange }, ref) => {
     const [wards, setWards] = useState([]);
     const [ward, setWard] = useState(null);
 
-    const loadLocations = async (name, parent_id) => {
-        const id_value = parent_id || '';
-
-        try {
-            const response = await axios.get(`https://open.oapi.vn/location/${name}/${id_value}?page=0&size=100&`);
-            return response.data.data;
-        } catch (error) {
-            return null;
-        }
-    }
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        setProvince({ id: value?.province?.id || '', name: value?.province?.name || ''});
-        setDistrict({ id: value?.district?.id || '', name: value?.district?.name || ''});
-        setWard({ id: value?.ward?.id || '', name: value?.ward?.name || ''});
+        setProvince(value?.province);
+        setDistrict(value?.district);
+        setWard(value?.ward);
     }, [value]);
 
     useEffect(() => {
-        const fetchProvinces = async () => {
-            const provinces = await loadLocations('provinces');
-            setProvinces(provinces);
+        const loadProvinces = async () => {
+            try {
+                const provinces = await fetchProvinces();
+                setProvinces(provinces);
+            } catch (error) {
+                setError(error);
+            }
         };
 
-        fetchProvinces();
+        loadProvinces();
     }, []);
 
     useEffect(() => {
-        const fetchDistricts = async () => {
-            if (province?.id) {
-                console.log('is Called api');
-                const districts = await loadLocations('districts', province.id);
+        const loadDistricts = async () => {
+            if (province) {
+                const districts = await fetchDistricts(province);
                 setDistricts(districts);
             } else {
                 setDistricts([]);
@@ -48,13 +43,13 @@ const Location = forwardRef(({ value, onChange }, ref) => {
             }
         };
 
-        fetchDistricts();
-    }, [province?.id]);
+        loadDistricts();
+    }, [province]);
 
     useEffect(() => {
-        const fetchWards = async () => {
-            if (district?.id) {
-                const wards = await loadLocations('wards', district.id);
+        const loadWards = async () => {
+            if (district) {
+                const wards = await fetchWards(district);
                 setWards(wards);
             } else {
                 setWards([]);
@@ -62,60 +57,61 @@ const Location = forwardRef(({ value, onChange }, ref) => {
             }
         };
 
-        fetchWards();
+        loadWards();
     }, [district]);
 
     const handleProvinceChange = (e) => {
-        const selectedProvince = provinces.find(p => p.id === e.target.value);
-        setProvince({ id: selectedProvince?.id || '', name: selectedProvince?.name });
+        const selectedProvince = provinces?.find(p => p.code === Number(e.target.value));
+        setProvince(selectedProvince?.code || null);
         setDistrict(null);
 
         onChange({ 
-            province: selectedProvince, 
+            province: selectedProvince?.code, 
             district: null, 
             ward: null 
         });
     }
 
     const handleDistrictChange = (e) => {
-        const selectedDistrict = districts.find(d => d.id === e.target.value);
-        setDistrict({ id: selectedDistrict?.id || '', name: selectedDistrict?.name} );
+        const selectedDistrict = districts?.find(d => d.code === Number(e.target.value));
+        setDistrict(selectedDistrict?.code || null);
         setWard(null);
 
         onChange({ 
             province: province, 
-            district: selectedDistrict, 
+            district: selectedDistrict.code, 
             ward: null 
         });
     }
 
     const handleWardChange = (e) => {
-        const selectedWard = wards.find(w => w.id === e.target.value);
-        setWard({ id: selectedWard?.id || '', name: selectedWard?.name} );
+        const selectedWard = wards?.find(w => w.code === Number(e.target.value));
+        setWard(selectedWard?.code || null);
 
         onChange({ 
             province: province, 
             district: district, 
-            ward: selectedWard 
+            ward: selectedWard.code 
         });
     }
 
     return (
-        <div className='location-field'>
-            <div className="edit-field">
-                <div className="edit-title">
+        <div className='location-wr'>
+            <div className="location-field">
+                <div className="location-title">
                     <span>Tỉnh / Thành phố</span>
                 </div>
 
-                <div className="edit-input">
+                <div className="location-input">
                     <select 
-                        value={province?.id || ''} 
+                        value={province || ''} 
                         onChange={handleProvinceChange}
                         required
+                        style={{ backgroundImage: 'url(/images/down-arrow.png)' }}
                     >
                         <option value="">Chọn Tỉnh / Thành phố</option>
                         {provinces.map((province) => (
-                            <option key={province.id} value={province.id}>
+                            <option key={province.code} value={province.code}>
                                 { province.name }
                             </option>
                         ))}
@@ -123,20 +119,22 @@ const Location = forwardRef(({ value, onChange }, ref) => {
                 </div>
             </div>
 
-            <div className="edit-field">
-                <div className="edit-title">
+            <div className="location-field">
+                <div className="location-title">
                     <span>Quận / Huyện</span>
                 </div>
 
-                <div className="edit-input">
+                <div className="location-input">
                     <select 
-                        value={district?.id || ''} 
+                        value={district || ''} 
                         onChange={handleDistrictChange}
                         required
+                        style={{ backgroundImage: 'url(/images/down-arrow.png)' }}
+
                     >
                         <option value="">Chọn Quận / Huyện</option>
                         {districts.map((district) => (
-                            <option key={district.id} value={district.id}>
+                            <option key={district.code} value={district.code}>
                                 { district.name }
                             </option>
                         ))}
@@ -144,20 +142,21 @@ const Location = forwardRef(({ value, onChange }, ref) => {
                 </div>
             </div>
 
-            <div className="edit-field">
-                <div className="edit-title">
+            <div className="location-field">
+                <div className="location-title">
                     <span>Phường / Xã</span>
                 </div>
 
-                <div className="edit-input">
+                <div className="location-input">
                     <select 
-                        value={ward?.id || ''} 
+                        value={ward || ''} 
                         onChange={handleWardChange}
                         required
+                        style={{ backgroundImage: 'url(/images/down-arrow.png)' }}
                     >
                         <option value="">Chọn Phường / Xã</option>
                         {wards.map((ward) => (
-                            <option key={ward.id} value={ward.id}>
+                            <option key={ward.code} value={ward.code}>
                                 { ward.name }
                             </option>
                         ))}
