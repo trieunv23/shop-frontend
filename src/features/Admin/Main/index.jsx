@@ -7,6 +7,7 @@ import { Link, Outlet } from 'react-router-dom';
 import ProductIcon from '../../../components/icons/Product';
 import IconCategory from '../../../components/icons/Category';
 import Payment from '../../../components/icons/Payment';
+import BubbleChart from '../../../components/icons/BubbleChart';
 
 const AdminMain = () => {
 
@@ -95,6 +96,19 @@ const AdminMain = () => {
 
                                 <div className="item-name">
                                     Thanh toán
+                                </div>
+                            </Link>
+
+                            <Link
+                                className="menu-item"
+                                to='statistical'
+                            >
+                                <div className="item-icon">
+                                    <BubbleChart  width={'26px'} height={'26px'}/>
+                                </div>
+
+                                <div className="item-name">
+                                    Thống kê
                                 </div>
                             </Link>
                         </div>

@@ -27,3 +27,18 @@ export const createBanner = async(data) => {
     }
 } 
 
+export const updateBanners = async (data) => {
+    try {
+        const response = await apiService.post('/admin/banners/update', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw new Error(error.response?.data?.message || 'Failed to create banner');
+    }
+}
+

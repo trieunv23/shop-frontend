@@ -1,43 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import './styless.scss';
-import { fetchBanners } from '../../../../services/api/admin/banner';
+import { fetchBanners, updateBanners } from '../../../../services/api/admin/banner';
 import { API_URL } from '../../../../constants/config';
-import { isValidateImageFile } from '../../../../utils/fileUpload';
-import { Button, Upload } from 'antd';
-import { useForm, Controller } from 'react-hook-form';
-import { UploadOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
+
+    const [initialBanner, setInitialBanner] = useState([]);
     const [banners, setBanners] = useState([]);
-    const [fileList, setFileList] = useState([]);
-
-    const { handleSubmit, control } = useForm({
-        defaultValues: {
-
-        }
-    });
-
-    const beforeUpload = (file) => {
-        if (!isValidateImageFile(file)) {
-            return Upload.LIST_IGNORE;
-        }
-        return true;
-    }
-
-    const handleUploadChange = (info, field) => {
-        const updatedFileList = info.fileList.map(file => ({
-            ...file,
-            originFileObj: file.originFileObj || file
-        }));
-        setFileList(updatedFileList);
-        field.onChange(updatedFileList.map(file => file.originFileObj));
-    };
 
     useEffect(() => {
         const loadBanners = async () => {
             try {
                 const { banners } = await fetchBanners();
                 setBanners(banners);
+                setInitialBanner(banners);
 
                 console.log(banners);
             } catch (error) {
@@ -48,33 +26,79 @@ const Dashboard = () => {
         loadBanners();
     }, []);
 
-    const onSubmit = async (data) => {
-        
+    const handleDelete = (bannerId) => {
+        setBanners((prev) => prev.filter((banner) => banner.id !== bannerId));
+    }
 
+    const handleReset = () => {
+        setBanners(initialBanner);
+    }
+
+    const handleCreateBanner = () => {
+        navigate('/admin/banner');
+    }
+
+    const onSubmit = async () => {
         try {
-            
+            const bannerIds = banners.map((banner) => banner.id)
+            await updateBanners({  
+                'banner_ids': bannerIds,
+            });
+
+            alert('Cập nhật banner thành công');
         } catch (error) {
-            
+            console.log(error);
         }
     }
+
+    const handleDragStart = (e, index) => {
+        e.dataTransfer.setData('draggedIndex', index); // Lưu chỉ số của phần tử đang kéo
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault(); // Ngăn chặn hành vi mặc định để cho phép thả
+    };
+
+    const handleDrop = (e, index) => {
+        e.preventDefault();
+        const draggedIndex = e.dataTransfer.getData('draggedIndex'); // Lấy chỉ số phần tử bị kéo
+        const draggedItem = banners[draggedIndex]; // Lấy phần tử bị kéo
+
+        const updatedBanners = [...banners];
+        updatedBanners.splice(draggedIndex, 1); // Xóa phần tử bị kéo ra khỏi mảng
+        updatedBanners.splice(index, 0, draggedItem); // Chèn phần tử bị kéo vào vị trí mới
+
+        setBanners(updatedBanners); // Cập nhật lại danh sách banners
+    };
 
     return (
         <div className='dashboard-wr'>
             <div className="slides">
                 <div className="slide-title">
                     <span>Ảnh slides</span>
+                    <div className="banner-action">
+                        <button onClick={handleCreateBanner}>Thêm</button>
+                        <button onClick={handleReset}>Làm mới</button>
+                    </div>
                 </div>
 
                 <div className="slide-imgs">
-                    { banners.map((banner) => (
-                         <div className="slide-item">
+                    { banners.map((banner, index) => (
+                         <div 
+                            className="slide-item"
+                            key={banner.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, index)} 
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, index)}
+                         >
                             <div className="img-content">
                                 <span className="image-index">
-                                    STT: 1
+                                    {`Tiêu đề: ${ banner.title }`}
                                 </span>
     
                                 <div className="content-detail">
-                                    Size: 30 x 40
+                                    { `Đường dẫn: ${ banner.target }` }
                                 </div>
                             </div>
     
@@ -83,30 +107,17 @@ const Dashboard = () => {
                             </div>
     
                             <div className="slide-action">
-                                <button>Xóa</button>
+                                <button onClick={() => handleDelete(banner.id)}>Xóa</button>
                             </div>
                         </div>
                     )) }
                 </div>
 
-                <Controller 
-                    name='images'
-                    control={control}
-                    render={({ field }) => (
-                        <Upload
-                            {...field}
-                            listType="picture"
-                            beforeUpload={beforeUpload}
-                            onChange={(infor) => handleUploadChange(infor, field)}
-                            className='upload-images'
-                            fileList={fileList}
-                        >
-                            <Button icon={<UploadOutlined />}>Upload File</Button>
-                        </Upload>
-                    )}
-                />
+                <div className="btn-submit">
+                    <button onClick={onSubmit}>Cập nhật</button>
+                </div>
             </div>
-        </div>
+        </div>              
     );
 };
 

@@ -176,6 +176,15 @@ const DetailProduct = (props) => {
 
                                     <div className="horizontal"></div>
 
+                                    <select 
+                                        name="" 
+                                        id="" 
+                                        className='select-option'
+                                        style={{ backgroundImage: 'url(/images/down-arrow.png)' }}
+                                    >
+                                        <option value="">- Bắt buộc</option>
+                                    </select>
+
                                     <Controller 
                                         name='colorId'
                                         control={control}

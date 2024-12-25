@@ -29,6 +29,7 @@ import AdminCategories from '../features/Admin/Main/Category/Categories';
 import AdminCategoryForm from '../features/Admin/Main/Category/CategoryForm';
 import AdminPayment from '../features/Admin/Main/Payment';
 import AdminPayments from '../features/Admin/Main/Payment/Payments';
+import Statistical from '../features/Admin/Main/Statistical';
 import AdminPaymentDetail from '../features/Admin/Main/Payment/PaymentDetail';
 import Product from '../features/Product';
 import Products from '../features/Product/Products';
@@ -41,6 +42,8 @@ import Order from '../features/Order';
 import Orders from '../features/Order/Orders';
 import OrderDetail from '../features/Order/OrderDetail';
 import User from '../features/User';
+
+import Test from '../features/Admin/Main/Test';
 
 const Routes = () => {
     return useRoutes([
@@ -99,6 +102,7 @@ const Routes = () => {
                     path: path.adMain, 
                     element: <AdminMain />,
                     children: [
+                        { path: path.adTest, element: <Test /> },
                         { path: path.adCustomers, element: <Customers /> },
                         { 
                             path: path.adDashboard, 
@@ -136,7 +140,8 @@ const Routes = () => {
                                 { path: path.adPayments, element: <AdminPayments /> },
                                 { path: path.adPaymentEdit, element: <AdminPaymentDetail /> }
                             ]
-                        }
+                        },
+                        { path: path.adStatistical, element: <Statistical /> }
                     ]
                 }
             ]

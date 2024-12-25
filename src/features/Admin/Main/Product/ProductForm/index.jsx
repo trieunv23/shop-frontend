@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import './styles.scss';
 import { useForm, Controller } from 'react-hook-form';
-import axios from 'axios';
-
 import { Select, Button, Upload } from 'antd';
-
-import { UploadOutlined } from '@ant-design/icons';
-import { API_URL } from '../../../../../constants/config';
-
 import { isValidateImageFile } from '../../../../../utils/fileUpload';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { fetchCategories } from '../../../../../services/api/admin/categoryApi';
 import { fetchSizes } from '../../../../../services/api/admin/sizeApi';
 import { fetchColors } from '../../../../../services/api/admin/colorApi';
-import { createProduct } from '../../../../../services/api/admin/productApi';
+import { createProduct, fetchProduct, updateProduct } from '../../../../../services/api/admin/productApi';
+import { API_URL } from '../../../../../constants/config';
+import { UploadOutlined } from '@ant-design/icons';
+import Reset from '../../../../../components/icons/Reset';
 
 const ProductForm = () => {
+    const [product, setProduct] = useState(null);
     const navigate = useNavigate();
     const { Option } = Select;
     const [fileList, setFileList] = useState([]);
     const [categories, setCategories] = useState([]);
     const [sizes, setSizes] = useState([]);
     const [colors, setColors] = useState([]);
+    const [images, setImages] = useState([]);
+
+    const { id } = useParams();
 
     const beforeUpload = (file) => {
         if (!isValidateImageFile(file)) {
@@ -40,7 +41,7 @@ const ProductForm = () => {
     };
     
 
-    const { handleSubmit, control, formState: { errors } } = useForm({
+    const { handleSubmit, control, formState: { errors }, reset } = useForm({
         defaultValues: {
             name: '',
             price: '',
@@ -54,7 +55,6 @@ const ProductForm = () => {
     });
 
     const onSubmit = async (data) => {
-        console.log(data.images);
         try {
             const formData = new FormData();
 
@@ -65,18 +65,42 @@ const ProductForm = () => {
                     formData.append(`${key}[]`, key === 'categories' || key === 'sizes' ? Number(item) : item)
                 );
             });
+            
+            if (id) {
+                // Update
 
-            data.images.forEach((image) => formData.append('images[]', image));
-
-            await createProduct(formData);
-
-            alert('Thêm sản phẩm thành công.');
+                images.forEach((image) => {
+                    formData.append('image_ids[]', image.id);
+                });
+                
+                await updateProduct(id, formData);
+                alert('Cập nhật sản phẩm thành công.');
+            } else {
+                await createProduct(formData);
+                alert('Thêm sản phẩm thành công.');
+            }
 
             navigate('/admin/product');
         } catch (error) {
+            alert('Đã xảy ra lỗi.');
             console.log(error.response);
         }
     } 
+
+    useEffect(() => {
+        const loadProduct = async(productId) => {
+            try {
+                const { product } = await fetchProduct(productId);
+                setProduct(product);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        if (id) {
+            loadProduct(id);
+        }
+    }, [id]);
 
     useEffect(() => {
         const loadCategories = async () => {
@@ -117,10 +141,49 @@ const ProductForm = () => {
         loadColors();
     }, []);
 
+    useEffect(() => {
+        if (product) {
+            reset({
+                name: product.name,
+                price: product.price,
+                weight: product.weight,
+                description: product.description,
+                categories: product.categories.map((product) => product.id),
+                colors: product.colors.map((color) => color.id),
+                sizes: product.sizes.map((size) => size.id),
+            });
+
+            setImages(product.images);
+        }
+    }, [product, reset]);
+
+    const handleReset = () => {
+        if (product) {
+            reset({
+                name: product.name,
+                price: product.price,
+                weight: product.weight,
+                description: product.description,
+                categories: product.categories.map((product) => product.id),
+                colors: product.colors.map((color) => color.id),
+                sizes: product.sizes.map((size) => size.id),
+            });
+
+            setImages(product.images);
+            setFileList([]);
+        }
+    }
+
+    const handleDeleteImage = (id) => {
+        setImages((prev) => prev.filter((image) => image.id !== id));
+    }
+
     return (
         <div className='adm_addproduct'>
             <div className="add_title">
                 <span>Thêm sản phẩm</span>
+
+                <button className='btn-reset' onClick={handleReset}>Làm mới</button>
             </div>
 
             <form className="add_box" onSubmit={handleSubmit(onSubmit)}>
@@ -293,6 +356,23 @@ const ProductForm = () => {
                     <div className="add_list_right">
                         <div className="image-add-title">
                             Thêm ảnh
+                        </div>
+
+                        <div className="images-product">
+                            { images && images.map((image) => (
+                                <div 
+                                    key={image.id}
+                                    className="image-item"
+                                >
+                                    <img 
+                                        className='image-content'
+                                        src={`${API_URL}/storage/${image.path}`} 
+                                        alt="" 
+                                    />
+
+                                    <button onClick={() => handleDeleteImage(image.id)}>Xóa</button>
+                                </div>
+                            )) }
                         </div>
 
                         <div className="image-wrap">

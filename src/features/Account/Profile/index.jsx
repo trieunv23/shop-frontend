@@ -1,25 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles.scss';
 import { Controller, useForm } from "react-hook-form";
 
 import DayOfBirthSelector from '../../../components/DateOfBirthSelector';
 import GenderSelector from '../../../components/GenderSelector';
 import ResultHandle from '../../../components/ResultHandle/inex';
-
-import { useAccountStatus } from '../../../context/AccountStatusContext';
 import { isValidBirthDate } from '../../../utils/dateUtils';
-import { isValidDateMinLengthString } from '../../../utils/stringUtils';
-
-import { API_URL, MESSAGE } from '../../../constants/config';
+import { MESSAGE } from '../../../constants/config';
 import _ from 'lodash';
 import { updateProfile } from '../../../services/api/userApi';
-import { validateEmail, validatePhoneNumber } from '../../../utils/fieldUtils';
+import { validateEmail } from '../../../utils/fieldUtils';
 import { fetchUser } from '../../../services/api/userApi';
-import { Link } from 'react-router-dom';
 
 const Profile = () => {
-    const { setOptionSelected } = useAccountStatus();
-
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState('');
 
@@ -38,6 +31,7 @@ const Profile = () => {
     });
 
     const onSubmit = async(data) => {
+        console.log(data);
         if (initialUserData) {
             const isUpdated = Object.keys(data).some((key) => data[key] !== initialUserData[key]);
             if (isUpdated) {

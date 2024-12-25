@@ -3,8 +3,10 @@ import './styles.scss';
 import Title from '../../components/Title';
 import { Button, Table, Tag } from 'antd';
 import { fetchProducts } from '../../../../../services/api/admin/productApi';
+import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
 
@@ -40,6 +42,10 @@ const Products = () => {
         });
 
         setFilteredProducts(filtered);
+    }
+
+    const handleDetailProduct = (productId) => {
+        navigate(`edit/${productId}`);
     }
 
     const columns = [
@@ -90,7 +96,7 @@ const Products = () => {
         title: 'Hành động',
         key: 'action',
         render: (text, record) => (
-            <Button>
+            <Button onClick={() => handleDetailProduct(record.id)}>
                 Chi tiết
             </Button>
         ),
